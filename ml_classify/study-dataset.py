@@ -1,4 +1,6 @@
+from matplotlib import pyplot as plt
 import pandas as pd
+from pandas.plotting import scatter_matrix
 import numpy as np
 from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
@@ -142,12 +144,28 @@ def extract_window(df, window_size):
     
     return X, Y
 
+print(df_attack)
 
+# names = df_attack.columns
+# correlations = df_attack.corr()
+# # plot correlation matrix
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# cax = ax.matshow(correlations, vmin=-1, vmax=1)
+# fig.colorbar(cax)
+# ticks = np.arange(0,13,1)
+# ax.set_xticks(ticks)
+# ax.set_yticks(ticks)
+# ax.set_xticklabels(names)
+# ax.set_yticklabels(names)
+df_attack.plot(kind='density', subplots=True, sharex=False)
+plt.show()
+
+exit()
 # Using Rosell to get frequency-based features from df with attacks in it
 window_size = 10
 attack_X, attack_Y = extract_window(df_attack, window_size)
 print(attack_X.shape)
-
 
 # feature selection:
 features = 100
