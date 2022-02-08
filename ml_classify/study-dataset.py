@@ -162,7 +162,7 @@ def extract_window(df, window_size):
 df_attack = df_attack[:1000]
 print(df_attack)
 
-sns.pairplot(df_attack)
+# sns.pairplot(df_attack)
 
 # plot correlation matrix
 # names = df_attack.columns
