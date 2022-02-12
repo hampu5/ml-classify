@@ -16,7 +16,6 @@ import shap
 datasets = {}
 
 
-# ORNL DATA
 PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL/"
 PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
@@ -29,20 +28,20 @@ def load_dataset(path, filename, has_attacks):
     return data
 
 
-ambient = load_dataset(PATH_ORNL, "ambient.csv", False)
-attack = load_dataset(PATH_ORNL, "attack.csv", True)
+# ambient = load_dataset(PATH_ORNL, "ambient.csv", False)
+# attack = load_dataset(PATH_ORNL, "attack.csv", True)
 
-df1 = pd.concat([ambient, attack])
-df1["remarks"] = "No DLC available"
-datasets["ROAD"] = df1.to_dict("records")
+# df1 = pd.concat([ambient, attack])
+# df1["remarks"] = "No DLC available"
+# datasets["ROAD"] = df1.to_dict("records")
 
-# Release memory
-ambient = None
-attack = None
+# # Release memory
+# ambient = None
+# attack = None
 
-# df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
-# df1["remarks"] = "-"
-# datasets["Survival"] = df1.to_dict("records")
+df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
+df1["remarks"] = "-"
+datasets["Survival"] = df1.to_dict("records")
 
 # df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
 # df1["remarks"] = "-"
@@ -110,7 +109,7 @@ def compile_dataset(datasets):
 df_attack, df_ambient = compile_dataset(datasets)
 df_ambient = None # Release memory, as it isn't used for now
 
-df_attack.drop("DLC", axis=1, inplace=True, errors="ignore")
+df_attack.drop(["DLC", "t", "dt", "dt_ID"], axis=1, inplace=True, errors="ignore")
 # df_attack = df_attack[:1000]
 
 print(df_attack)
@@ -131,7 +130,7 @@ print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 attack_Y = None
 
 
-#Classification with Random Forest
+# Classification with Random Forest
 clf = RandomForestClassifier(n_estimators=20, random_state=0, max_depth=20, max_leaf_nodes=50).fit(X_train, y_train)
 print("Random Forest model fitted!")
 avg_depth = 0
@@ -152,19 +151,23 @@ print(f"Average depth of trees: {avg_depth}     Average # of leaves: {avg_leaves
 # clf = load("RF_Survival.joblib")
 
 
-# scores = cross_val_score(clf, X_train, y_train, scoring='f1', cv=10, n_jobs=-1)
-# print("Training F1: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std()))
+scores = cross_val_score(clf, X_train, y_train, scoring='f1', cv=10, n_jobs=-1)
+print("Training F1: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std()))
 
-# pred = clf.predict(X_test)
-# print("Test data has been Classified!")
+pred = clf.predict(X_test)
+print("Test data has been Classified!")
 
-# f1_scores = f1_score(y_test, pred, average='weighted')
-# print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
+f1_scores = f1_score(y_test, pred, average='weighted')
+print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
 
-
-explainer = shap.Explainer(clf)
+shap.initjs()
+explainer = shap.TreeExplainer(clf)
 print("Explainer created!")
-shap_values = explainer(attack_X)
+shap_values = explainer.shap_values(X_train)
 print("Shap values created!")
-dump(shap_values, "RF_ROAD_Shap.joblib")
-shap.plots.beeswarm(shap_values)
+dump(shap_values, "RF_Survival_Shap.joblib")
+# shap.plots.beeswarm(shap_values)
+
+# shap_values = load("RF_ROAD_Shap.joblib")
+
+shap.summary_plot(shap_values[1], X_train)
