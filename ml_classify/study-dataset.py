@@ -7,16 +7,16 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score, train_test_split
-# import seaborn as sns
+import seaborn as sns
 
 
 datasets = {}
 
 
 # ORNL DATA
-PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL/"
-PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
-PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
+PATH_ORNL = "/home/hampus/projects/Datasets/ORNL/"
+PATH_SURVIVAL = "/home/hampus/projects/Datasets/Survival/"
+PATH_HISINGEN = "/home/hampus/projects/Datasets/Hisingen/"
 
 def load_dataset(path, filename, has_attacks):
     data = pd.read_csv(f"{path}/{filename}")
@@ -26,20 +26,20 @@ def load_dataset(path, filename, has_attacks):
     return data
 
 
-# ambient = load_dataset(PATH_ORNL, "ambient.csv", False)
-# attack = load_dataset(PATH_ORNL, "attack.csv", True)
+ambient = load_dataset(PATH_ORNL, "ambient.csv", False)
+attack = load_dataset(PATH_ORNL, "attack.csv", True)
 
-# df1 = pd.concat([ambient, attack])
-# df1["remarks"] = "No DLC available"
-# datasets["ORNL"] = df1.to_dict("records")
+df1 = pd.concat([ambient, attack])
+df1["remarks"] = "No DLC available"
+datasets["ORNL"] = df1.to_dict("records")
 
-# # Release memory
-# ambient = None
-# attack = None
+# Release memory
+ambient = None
+attack = None
 
-df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
-df1["remarks"] = "-"
-datasets["Survival"] = df1.to_dict("records")
+# df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
+# df1["remarks"] = "-"
+# datasets["Survival"] = df1.to_dict("records")
 
 # df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
 # df1["remarks"] = "-"
@@ -192,6 +192,11 @@ clf = RandomForestClassifier(n_estimators=100)
 clf.fit(X_train, y_train)
 print("Random Forest model fitted!")
 
+from joblib import dump, load
+
+dump(clf, "RF_Survival.joblib")
+print("Model Saved!")
+
 scores = cross_val_score(clf, X_train, y_train, scoring='f1', cv=10)
 print("Training F1: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std()))
 
@@ -200,3 +205,7 @@ print("Test data has been Classified!")
 
 f1_scores = f1_score(y_test, pred, average='weighted')
 print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 7bf509253a46003b01560df0a25ac7f540608c9a
