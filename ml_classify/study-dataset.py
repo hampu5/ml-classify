@@ -205,7 +205,4 @@ print("Test data has been Classified!")
 
 f1_scores = f1_score(y_test, pred, average='weighted')
 print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
-<<<<<<< HEAD
-=======
    
->>>>>>> 7bf509253a46003b01560df0a25ac7f540608c9a
