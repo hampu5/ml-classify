@@ -34,7 +34,7 @@ attack = load_dataset(PATH_ORNL, "attack.csv", True)
 
 df1 = pd.concat([ambient, attack])
 df1["remarks"] = "No DLC available"
-datasets["ORNL"] = df1.to_dict("records")
+datasets["ROAD"] = df1.to_dict("records")
 
 # Release memory
 ambient = None
@@ -46,7 +46,7 @@ attack = None
 
 # df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
 # df1["remarks"] = "-"
-# datasets["Survival"] = df1.to_dict("records")
+# datasets["Hisingen"] = df1.to_dict("records")
 
 
 # Release memory
@@ -119,41 +119,38 @@ print(df_attack)
 attack_Y = df_attack["Label"]
 attack_X = df_attack.drop("Label", axis=1)
 
-for col in df_attack:
-    print(df_attack[col].max())
+# for col in df_attack:
+#     print(df_attack[col].max())
 
 X_train, X_test, y_train, y_test = train_test_split(attack_X, attack_Y, test_size=0.3, random_state=2, shuffle=True, stratify=attack_Y)
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 # Free memory
-attack_X = None
+# attack_X = None
 attack_Y = None
 
 
 #Classification with Random Forest
-clf = RandomForestClassifier(n_estimators=20, random_state=0).fit(X_train, y_train)
+clf = RandomForestClassifier(n_estimators=20, random_state=0, max_depth=20, max_leaf_nodes=50).fit(X_train, y_train)
 print("Random Forest model fitted!")
 avg_depth = 0
+avg_leaves = 0
 for clf_est in clf.estimators_:
-    val = clf_est.get_depth()
-    # val = clf_est.get_n_leaves()
-    print(val)
-    avg_depth += val
+    depth = clf_est.get_depth()
+    leaves = clf_est.get_n_leaves()
+    print(f"{depth}       {leaves}")
+    avg_depth += depth
+    avg_leaves += leaves
 avg_depth /= len(clf.estimators_)
-print(f"Average depth of trees: {avg_depth}")
+avg_leaves /= len(clf.estimators_)
+print(f"Average depth of trees: {avg_depth}     Average # of leaves: {avg_leaves}")
 
-dump(clf, "RF_Survival.joblib")
-print("Model saved!")
+# dump(clf, "RF_ROAD.joblib")
+# print("Model saved!")
 
 # clf = load("RF_Survival.joblib")
 
-# explainer = shap.TreeExplainer(clf)
-# print("Explainer created!")
-# shap_values = explainer(X_train)
-# print("Shap values created!")
-# dump(shap_values, "RF_Survival_Shap.joblib")
-# shap.plots.beeswarm(shap_values)
 
 # scores = cross_val_score(clf, X_train, y_train, scoring='f1', cv=10, n_jobs=-1)
 # print("Training F1: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std()))
@@ -163,4 +160,11 @@ print("Model saved!")
 
 # f1_scores = f1_score(y_test, pred, average='weighted')
 # print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
-   
+
+
+explainer = shap.Explainer(clf)
+print("Explainer created!")
+shap_values = explainer(attack_X)
+print("Shap values created!")
+dump(shap_values, "RF_ROAD_Shap.joblib")
+shap.plots.beeswarm(shap_values)
