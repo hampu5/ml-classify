@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score, train_test_split
 from joblib import dump, load
 import shap
-# import seaborn as sns
+import seaborn as sns
 
 
 datasets = {}
@@ -109,6 +109,29 @@ def compile_dataset(datasets):
 df_attack, df_ambient = compile_dataset(datasets)
 df_ambient = None # Release memory, as it isn't used for now
 
+# Compute the correlation matrix
+corr = df_attack.corr()
+
+# Generate a mask for the upper triangle
+mask = np.triu(np.ones_like(corr, dtype=bool))
+
+# Draw the correlation heatmap with the mask
+def tostr(num):
+    if isinstance(num, str): return num
+    if num < 0: return str(num)[:5]
+    return str(num)[:4]
+def remove_nocorr(corr):
+    annot = corr.copy()
+    annot.where(np.abs(annot) > 0.2, " ", inplace=True)
+    annot = annot.applymap(tostr)
+    return annot
+annots = remove_nocorr(corr)
+sns.heatmap(corr,mask=mask, vmin=-1, vmax=1, center=0, annot=annots, annot_kws={"fontsize": 8}, fmt="s")
+
+plt.show()
+
+exit()
+
 df_attack.drop(["DLC", "t", "dt", "dt_ID"], axis=1, inplace=True, errors="ignore")
 # df_attack = df_attack[:1000]
 
@@ -166,7 +189,6 @@ print("Explainer created!")
 shap_values = explainer.shap_values(X_train)
 print("Shap values created!")
 dump(shap_values, "RF_Survival_Shap.joblib")
-# shap.plots.beeswarm(shap_values)
 
 # shap_values = load("RF_ROAD_Shap.joblib")
 
