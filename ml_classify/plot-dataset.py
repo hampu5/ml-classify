@@ -7,16 +7,16 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score, train_test_split
-# import seaborn as sns
+import seaborn as sns
 
 
 datasets = {}
 
 
 # ORNL DATA
-PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL/"
-PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
-PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
+PATH_ORNL = "/home/hampus/projects/Datasets/ORNL/"
+PATH_SURVIVAL = "/home/hampus/projects/Datasets/Survival/"
+PATH_HISINGEN = "/home/hampus/projects/Datasets/Hisingen/"
 
 
 def load_dataset(path, filename, has_attacks):
@@ -105,11 +105,13 @@ for dname, dataset in datasets.items():
 df_ambient = None # Release memory, as it isn't used for now
 
 
-# df_attack = df_attack.drop("DLC", axis=1)
-df_attack = df_attack[:1000]
+df_attack.drop(["t", "ID", "DLC", "dt", "dt_ID"], axis=1, inplace=True)
+
+#df_attack = df_attack[:10000]
 print(df_attack)
 
-# sns.pairplot(df_attack)
+sns.pairplot(df_attack, corner=True, hue="Label")
+
 
 # plot correlation matrix
 # names = df_attack.columns
@@ -125,4 +127,4 @@ print(df_attack)
 # ax.set_yticklabels(names)
 
 # df_attack.plot(kind='density', subplots=True, sharex=False)
-# plt.show()
+plt.show()
