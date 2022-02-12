@@ -111,7 +111,7 @@ df_ambient = None # Release memory, as it isn't used for now
 
 
 def get_labels_by_class(class_, window_size): 
-    # return [c for c in df.columns if c.startswith(class_ + "_")]    
+    # return [c for c in df.columns if c.startswith(class_ + "_")]
     return [f"{class_}_{i}" for i in range(window_size)]
 
 #Features related to frequency using window
@@ -159,28 +159,10 @@ def extract_window(df, window_size):
     return X, Y
 
 # df_attack = df_attack.drop("DLC", axis=1)
-df_attack = df_attack[:1000]
+# df_attack = df_attack[:1000]
 print(df_attack)
 
-# sns.pairplot(df_attack)
 
-# plot correlation matrix
-# names = df_attack.columns
-# correlations = df_attack.corr()
-# fig = plt.figure()
-# ax = fig.add_subplot(111)
-# cax = ax.matshow(correlations, vmin=-1, vmax=1)
-# fig.colorbar(cax)
-# ticks = np.arange(0, names.size, 1)
-# ax.set_xticks(ticks)
-# ax.set_yticks(ticks)
-# ax.set_xticklabels(names)
-# ax.set_yticklabels(names)
-
-# df_attack.plot(kind='density', subplots=True, sharex=False)
-# plt.show()
-
-exit()
 # Using Rosell to get frequency-based features from df with attacks in it
 window_size = 10
 attack_X, attack_Y = extract_window(df_attack, window_size)
@@ -218,4 +200,3 @@ print("Test data has been Classified!")
 
 f1_scores = f1_score(y_test, pred, average='weighted')
 print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
-   
