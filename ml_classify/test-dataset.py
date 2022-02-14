@@ -12,6 +12,8 @@ from joblib import dump, load
 import shap
 import seaborn as sns
 
+# Maybe it is possible to account for obfuscation by using some kind of shape transformation instead of relying on values
+# in the payload.
 
 datasets = {}
 
@@ -39,13 +41,13 @@ def load_dataset(path, filename, has_attacks):
 # ambient = None
 # attack = None
 
-df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
-df1["remarks"] = "-"
-datasets["Survival"] = df1.to_dict("records")
-
-# df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
+# df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
 # df1["remarks"] = "-"
-# datasets["Hisingen"] = df1.to_dict("records")
+# datasets["Survival"] = df1.to_dict("records")
+
+df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
+df1["remarks"] = "-"
+datasets["Hisingen"] = df1.to_dict("records")
 
 
 # Release memory
@@ -108,6 +110,9 @@ def compile_dataset(datasets):
 
 df_attack, df_ambient = compile_dataset(datasets)
 df_ambient = None # Release memory, as it isn't used for now
+
+print(df_attack)
+print(np.amax(df_attack["d0"]))
 
 # Compute the correlation matrix
 corr = df_attack.corr()
