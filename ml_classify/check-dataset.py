@@ -13,5 +13,5 @@ for index, dataitem in df1.iterrows():
     
     df = pd.read_csv(path + filename)
     print(name)
-    # print(df)
+    print(df)
     print(np.amax(df["d0"]))

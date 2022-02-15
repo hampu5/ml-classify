@@ -1,4 +1,5 @@
-from tokenize import Ignore
+import matplotlib
+matplotlib.use("pgf")
 from matplotlib import pyplot as plt
 import pandas as pd
 from pandas.plotting import scatter_matrix
@@ -15,6 +16,8 @@ import seaborn as sns
 # Maybe it is possible to account for obfuscation by using some kind of shape transformation instead of relying on values
 # in the payload.
 
+from compiledataset import load_dataset, get_datasets, compile_dataset
+
 datasets = {}
 
 
@@ -22,140 +25,44 @@ PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL/"
 PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
-def load_dataset(path, filename, has_attacks):
-    data = pd.read_csv(f"{path}/{filename}")
-    data["filename"] = data["filename"].apply(lambda x: path + x)
-    data["has_attacks"] = has_attacks
-    data = data[["name", "filename", "has_attacks"]]
-    return data
 
+dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+dataset["remarks"] = "No DLC available"
+datasets["ROAD"] = dataset.to_dict("records")
 
-# ambient = load_dataset(PATH_ORNL, "ambient.csv", False)
-# attack = load_dataset(PATH_ORNL, "attack.csv", True)
+# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+# dataset["remarks"] = "-"
+# datasets["Survival"] = dataset.to_dict("records")
 
-# df1 = pd.concat([ambient, attack])
-# df1["remarks"] = "No DLC available"
-# datasets["ROAD"] = df1.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
+# dataset["remarks"] = "-"
+# datasets["Hisingen"] = dataset.to_dict("records")
 
-# # Release memory
-# ambient = None
-# attack = None
-
-# df1 = load_dataset(PATH_SURVIVAL, "data.csv", True)
-# df1["remarks"] = "-"
-# datasets["Survival"] = df1.to_dict("records")
-
-df1 = load_dataset(PATH_HISINGEN, "data.csv", True)
-df1["remarks"] = "-"
-datasets["Hisingen"] = df1.to_dict("records")
-
-
-# Release memory
-df1 = None
-
-
-# various functions to get the data into the format we want
-def calc_relative_time(AT):    
-    # helper function to translate absolute time to relative time
-    dt = AT.diff()
-    dt[0] = dt.mean() # fill the missing first element
-    return dt
-
-def calc_relative_time_per_id(df):
-    df["dt_ID"] = df.groupby(by="ID")["t"].diff()
-
-    nans_idx = df["dt_ID"].index[df["dt_ID"].apply(np.isnan)]
-    nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
-
-    meanall = df["dt_ID"].mean() # needed when an ID is used only once, hence no mean
-    means_ = df.groupby(by="ID")["dt_ID"].mean().fillna(meanall).to_dict() # mean for each ID
-    nans_vals = [means_[id_] for id_ in nans_ids]
-    
-    tmp = df["dt_ID"].copy()
-    tmp.iloc[nans_idx] = nans_vals
-    df["dt_ID"] = tmp
-
-    assert df.dt_ID.isnull().sum() == 0
-
-def read_file(filename):
-    df = pd.read_csv(filename)
-    
-    if "Timestamp" in df.columns:
-        df.rename(columns={'Timestamp':'t'}, inplace=True)
-    
-    df["dt"] = calc_relative_time(df["t"])
-    calc_relative_time_per_id(df)
-    
-    return df
-
-def compile_dataset(datasets):
-    df_attack = pd.DataFrame()
-    df_ambient = pd.DataFrame()
-
-    for dname, dataset in datasets.items():
-        for dataitem in dataset:
-            name = dataitem["name"]
-            filename = dataitem["filename"]
-            has_attacks = bool(dataitem["has_attacks"])
-            remarks = dataitem["remarks"] or ""
-            
-            if has_attacks:
-                df = read_file(filename)
-                df_attack = pd.concat([df_attack, df], ignore_index=True)
-            # else:
-            #     df = read_file(filename)
-            #     df_ambient = pd.concat([df_ambient, df], ignore_index=True)
-    return df_attack, df_ambient
+dataset = None # Release memory, as it isn't used for now
 
 
 df_attack, df_ambient = compile_dataset(datasets)
-df_ambient = None # Release memory, as it isn't used for now
+df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
+df_attack = None # Release memory
+df_ambient = None # Release memory
 
-print(df_attack)
-print(np.amax(df_attack["d0"]))
 
-# Compute the correlation matrix
-corr = df_attack.corr()
+df_all.drop(columns=["DLC", "t", "dt", "dt_ID"], inplace=True, errors="ignore")
 
-# Generate a mask for the upper triangle
-mask = np.triu(np.ones_like(corr, dtype=bool))
+print(df_all)
 
-# Draw the correlation heatmap with the mask
-def tostr(num):
-    if isinstance(num, str): return num
-    if num < 0: return str(num)[:5]
-    return str(num)[:4]
-def remove_nocorr(corr):
-    annot = corr.copy()
-    annot.where(np.abs(annot) > 0.2, " ", inplace=True)
-    annot = annot.applymap(tostr)
-    return annot
-annots = remove_nocorr(corr)
-sns.heatmap(corr,mask=mask, vmin=-1, vmax=1, center=0, annot=annots, annot_kws={"fontsize": 8}, fmt="s")
+X = df_all.drop(columns="Label")
+y = df_all["Label"]
 
-plt.show()
+df_all = None # Release memory
 
-exit()
-
-df_attack.drop(["DLC", "t", "dt", "dt_ID"], axis=1, inplace=True, errors="ignore")
-# df_attack = df_attack[:1000]
-
-print(df_attack)
-# print(df_ambient)
-
-attack_Y = df_attack["Label"]
-attack_X = df_attack.drop("Label", axis=1)
-
-# for col in df_attack:
-#     print(df_attack[col].max())
-
-X_train, X_test, y_train, y_test = train_test_split(attack_X, attack_Y, test_size=0.3, random_state=2, shuffle=True, stratify=attack_Y)
+# Split dataset into training and test data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=2, shuffle=True, stratify=y)
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
-# Free memory
-# attack_X = None
-attack_Y = None
+X = None # Release memory
+y = None # Release memory
 
 
 # Classification with Random Forest
