@@ -104,4 +104,11 @@ dump(shap_values, "RF_Survival_Shap.joblib")
 
 # shap_values = load("RF_ROAD_Shap.joblib")
 
+# Make sure that the ingested SHAP model (a TreeEnsemble object) makes the
+# same predictions as the original model
+assert np.abs(explainer.model.predict(X_test) - clf.predict(X_test)).max() < 1e-4
+
+# make sure the SHAP values sum up to the model output (this is the local accuracy property)
+assert np.abs(explainer.expected_value + explainer.shap_values(X_test).sum(1) - clf.predict(X_test)).max() < 1e-4
+
 shap.summary_plot(shap_values[1], X_train)
