@@ -209,6 +209,27 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "imbalanced-learn"
+version = "0.9.0"
+description = "Toolbox for imbalanced dataset in machine learning."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+joblib = ">=0.11"
+numpy = ">=1.14.6"
+scikit-learn = ">=1.0.1"
+scipy = ">=1.1.0"
+threadpoolctl = ">=2.0.0"
+
+[package.extras]
+docs = ["pandas (>=0.25.0)", "tensorflow (>=2.4.3)", "keras (>=2.4.3)", "matplotlib (>=2.2.3)", "seaborn (>=0.9.0)", "memory-profiler (>=0.57.0)", "sphinx (>=4.2.0)", "sphinx-gallery (>=0.7.0)", "numpydoc (>=1.0.0)", "sphinxcontrib-bibtex (>=2.4.1)", "pydata-sphinx-theme (>=0.7.2)"]
+examples = ["pandas (>=0.25.0)", "tensorflow (>=2.4.3)", "keras (>=2.4.3)", "matplotlib (>=2.2.3)", "seaborn (>=0.9.0)"]
+optional = ["pandas (>=0.25.0)", "tensorflow (>=2.4.3)", "keras (>=2.4.3)"]
+tests = ["pandas (>=0.25.0)", "tensorflow (>=2.4.3)", "keras (>=2.4.3)", "pytest (>=5.0.1)", "pytest-cov (>=2.9.0)", "flake8 (>=3.8.2)", "black (>=21.6b0)", "mypy (>=0.770)"]
+
+[[package]]
 name = "importlib-metadata"
 version = "4.11.1"
 description = "Read metadata from Python packages"
@@ -848,7 +869,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "3c07e0a251b5816964491e5065a457481d7a6c4efbcdd4ca01d47d0ed6382ef4"
+content-hash = "5c4e443f2c38ac161bd1730b66ff3d0bfaff3e2c8f1da62792c87bcdbe923e49"
 
 [metadata.files]
 absl-py = [
@@ -983,6 +1004,10 @@ h5py = [
 idna = [
     {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
     {file = "idna-3.3.tar.gz", hash = "sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"},
+]
+imbalanced-learn = [
+    {file = "imbalanced-learn-0.9.0.tar.gz", hash = "sha256:836a4c137cc3c10310d4f6cd5ec34600ff488d7f8c243a997c3f9b551c91d0b2"},
+    {file = "imbalanced_learn-0.9.0-py3-none-any.whl", hash = "sha256:ed2df83f1247b03fbc0362f5ffbf6f8bd76d02a7e0ebfef3be1ead39683ca10d"},
 ]
 importlib-metadata = [
     {file = "importlib_metadata-4.11.1-py3-none-any.whl", hash = "sha256:e0bc84ff355328a4adfc5240c4f211e0ab386f80aa640d1b11f0618a1d282094"},
