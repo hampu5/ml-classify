@@ -6,7 +6,7 @@ import pandas as pd
 def load_dataset(path, filename) -> pd.DataFrame:
     data = pd.read_csv(f"{path}/{filename}")
     data["filename"] = data["filename"].apply(lambda x: path + x)
-    data = data[["name", "filename", "has_attack"]]
+    data = data[["name", "type", "filename", "has_attack"]]
     return data
 
 # Get all smaller separate datasets within a dataset
@@ -57,6 +57,7 @@ def read_file(filename):
     
     return df
 
+pd.options.mode.chained_assignment = None # Chained assignment warning
 def compile_dataset(datasets):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
@@ -64,16 +65,21 @@ def compile_dataset(datasets):
     for dname, dataset in datasets.items():
         for dataitem in dataset:
             name = dataitem["name"]
+            atype = dataitem["type"]
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
             remarks = dataitem["remarks"] or ""
-            
+            df = read_file(filename)
+            # df["name"] = name
+            df["type"] = "none"
+            # df.loc["type", df["Label"] == 1] = atype
+            df["type"][df["Label"] == 1] = atype
+
             if has_attack:
-                df = read_file(filename)
                 df_attack = pd.concat([df_attack, df], ignore_index=True)
             else:
-                df = read_file(filename)
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
-    df_attack = df_attack[[c for c in df if c not in ["Label"]] + ["Label"]]
-    df_ambient = df_ambient[[c for c in df if c not in ["Label"]] + ["Label"]]
+    
+    df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
+    df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]
     return df_attack, df_ambient

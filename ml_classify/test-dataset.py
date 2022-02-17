@@ -10,6 +10,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score, train_test_split
 from joblib import dump, load
+from imblearn.under_sampling import RandomUnderSampler
 import shap
 import seaborn as sns
 
@@ -30,9 +31,9 @@ dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
 dataset["remarks"] = "No DLC available"
 datasets["ROAD"] = dataset.to_dict("records")
 
-# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-# dataset["remarks"] = "-"
-# datasets["Survival"] = dataset.to_dict("records")
+dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+dataset["remarks"] = "-"
+datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -47,23 +48,31 @@ df_attack = None # Release memory
 df_ambient = None # Release memory
 
 
-df_all.drop(columns=["DLC", "t", "dt", "dt_ID"], inplace=True, errors="ignore")
+df_all.drop(columns=["DLC", "t", "type"], inplace=True, errors="ignore")
 
 print(df_all)
 
-X = df_all.drop(columns="Label")
-y = df_all["Label"]
+X_sampled = df_all.drop(columns="Label")
+y_sampled = df_all["Label"]
 
 df_all = None # Release memory
 
+# # Use under-sampling on the majority Label (0, no attack)
+# rus = RandomUnderSampler(random_state=0)
+# X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
+
 # Split dataset into training and test data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=2, shuffle=True, stratify=y)
+X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=2, shuffle=True, stratify=y_sampled)
+
+X_sampled = None # Release memory
+y_sampled = None # Release memory
+
+# Use under-sampling on the majority Label (0, no attack)
+rus = RandomUnderSampler(random_state=0)
+X_train, y_train = rus.fit_resample(X_train, y_train)
+
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
-
-X = None # Release memory
-y = None # Release memory
-
 
 # Classification with Random Forest
 clf = RandomForestClassifier(n_estimators=20, random_state=0, max_depth=20, max_leaf_nodes=50).fit(X_train, y_train)
@@ -95,20 +104,20 @@ print("Test data has been Classified!")
 f1_scores = f1_score(y_test, pred, average='weighted')
 print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
 
-shap.initjs()
-explainer = shap.TreeExplainer(clf)
-print("Explainer created!")
-shap_values = explainer.shap_values(X_train)
-print("Shap values created!")
-dump(shap_values, "RF_Survival_Shap.joblib")
+# shap.initjs()
+# explainer = shap.TreeExplainer(clf)
+# print("Explainer created!")
+# shap_values = explainer.shap_values(X_train)
+# print("Shap values created!")
+# dump(shap_values, "RF_Survival_Shap.joblib")
 
-# shap_values = load("RF_ROAD_Shap.joblib")
+# # shap_values = load("RF_ROAD_Shap.joblib")
 
-# Make sure that the ingested SHAP model (a TreeEnsemble object) makes the
-# same predictions as the original model
-assert np.abs(explainer.model.predict(X_test) - clf.predict(X_test)).max() < 1e-4
+# # Make sure that the ingested SHAP model (a TreeEnsemble object) makes the
+# # same predictions as the original model
+# assert np.abs(explainer.model.predict(X_test) - clf.predict(X_test)).max() < 1e-4
 
-# make sure the SHAP values sum up to the model output (this is the local accuracy property)
-assert np.abs(explainer.expected_value + explainer.shap_values(X_test).sum(1) - clf.predict(X_test)).max() < 1e-4
+# # make sure the SHAP values sum up to the model output (this is the local accuracy property)
+# assert np.abs(explainer.expected_value + explainer.shap_values(X_test).sum(1) - clf.predict(X_test)).max() < 1e-4
 
-shap.summary_plot(shap_values[1], X_train)
+# shap.summary_plot(shap_values[1], X_train)

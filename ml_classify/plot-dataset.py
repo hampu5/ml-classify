@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from imblearn.under_sampling import RandomUnderSampler
 import seaborn as sns
 
 from compiledataset import load_dataset, get_datasets, compile_dataset
@@ -40,17 +41,16 @@ df_ambient = None # Release memory
 
 df_all.drop(columns=["DLC", "t"], inplace=True, errors="ignore")
 
-# X = df_all.drop(columns="Label")
-# y = df_all["Label"]
+X_sampled = df_all.drop(columns="Label")
+y_sampled = df_all["Label"]
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.001, random_state=2, shuffle=True, stratify=y)
-# X_train = None
-# y_train = None
-# X = None
-# y = None
-# print(y_train)
-# df_all = pd.concat([X_test, y_test], axis=1, ignore_index=True)
-# print(df_all)
+rus = RandomUnderSampler(random_state=0)
+X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
+
+X_sampled, _, y_sampled, _ = train_test_split(X_sampled, y_sampled, train_size=0.001, random_state=2, shuffle=True, stratify=y_sampled)
+
+df_all = pd.concat([X_sampled, y_sampled], axis=1)
+print(df_all)
 
 # # Compute the correlation matrix
 # corr = df_all.corr()
@@ -77,10 +77,14 @@ df_all.drop(columns=["DLC", "t"], inplace=True, errors="ignore")
 
 # Create plot
 # sns.heatmap(corr, mask=mask, vmin=-1, vmax=1, center=0, annot=annots, annot_kws={"fontsize": 8}, fmt="s")
-# sns.pairplot(df_all, hue=11)
 
-df_all.drop(columns=["ID", "dt", "dt_ID", "Label"], inplace=True, errors="ignore")
-sns.boxplot(data=df_all, orient="h")
+df_fuzz = df_all[df_all["type"] == "fabr"]
+sns.pairplot(data=df_fuzz) #, hue="Label")
+
+# sns.scatterplot(data=df_fuzz, x="dt", y="dt_ID") #, hue="Label")
+
+# df_all.drop(columns=["ID", "dt", "dt_ID", "Label"], inplace=True, errors="ignore")
+# sns.boxplot(data=df_all, x="dt_ID", y="type", orient="h")
 
 plt.show()
 # plt.savefig("Survival_correlation_heatmap.pgf")
