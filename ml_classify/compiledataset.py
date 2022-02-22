@@ -57,6 +57,21 @@ def read_file(filename):
     
     return df
 
+def merge_data_features(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    
+    number_of_bytes = 8
+    for index, col in enumerate(df_data):
+        df_data[col] = df_data[col].apply(lambda val: val * pow(256, number_of_bytes - index)).astype(np.float64)
+
+    df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    
+    # df["data"] = (df["data"] - df["data"].min()) / (df["data"].max() - df["data"].min())
+
+    df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True)
+
+    return df
+
 pd.options.mode.chained_assignment = None # Chained assignment warning
 def compile_dataset(datasets):
     df_attack = pd.DataFrame()
@@ -79,7 +94,10 @@ def compile_dataset(datasets):
                 df_attack = pd.concat([df_attack, df], ignore_index=True)
             else:
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
-    
+
+    # df_attack = merge_data_features(df_attack)
+    # df_ambient = merge_data_features(df_ambient)
+
     df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
     df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]
     return df_attack, df_ambient

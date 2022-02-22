@@ -17,7 +17,7 @@ import seaborn as sns
 # Maybe it is possible to account for obfuscation by using some kind of shape transformation instead of relying on values
 # in the payload.
 
-from compiledataset import load_dataset, get_datasets, compile_dataset
+from compiledataset import load_dataset, get_datasets, merge_data_features, compile_dataset
 
 datasets = {}
 
@@ -27,9 +27,9 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-dataset["remarks"] = "No DLC available"
-datasets["ROAD"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+# dataset["remarks"] = "No DLC available"
+# datasets["ROAD"] = dataset.to_dict("records")
 
 dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
 dataset["remarks"] = "-"
@@ -44,6 +44,13 @@ dataset = None # Release memory, as it isn't used for now
 
 df_attack, df_ambient = compile_dataset(datasets)
 df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
+attack_mean = df_attack["dt"].min()
+ambient_mean = df_ambient["dt"].min()
+all_mean = df_all["dt"].min()
+print(f"attacks dt min: {attack_mean}")
+print(f"ambient dt min: {ambient_mean}")
+print(f"all dt min: {all_mean}")
+
 df_attack = None # Release memory
 df_ambient = None # Release memory
 
