@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import re
 
 
 # Loading different datasets
@@ -63,14 +64,49 @@ def merge_data_features(df: pd.DataFrame):
     number_of_bytes = 8
     for index, col in enumerate(df_data):
         df_data[col] = df_data[col].apply(lambda val: val * pow(256, number_of_bytes - index)).astype(np.float64)
+        # df_data[col] = df_data[col].apply(lambda val: hex(val))
 
     df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
-    
+    # df["data"] = df["data"].apply(lambda val: bin)
     # df["data"] = (df["data"] - df["data"].min()) / (df["data"].max() - df["data"].min())
 
-    df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True)
+    return df
+
+def get_binary_payload(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    df_data = df_data.apply(lambda col: col.apply(lambda val: f"{val:08b}"))
+
+    df["bin_data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    print(df)
+    
+    return df
+
+def count_ones(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    ones = pd.Series
+    df["ones"] = 0
+    for col in df_data:
+        temp = df_data[col].apply(lambda val: bin(val).count("1"))
+        df["ones"] += temp
+    
+    return df
+
+def count_ones_weighted(df: pd.DataFrame):
+    df = get_binary_payload(df)
+    ones = df["bin_data"].apply(lambda val: val.count("1"))
+    weight_list = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
+    weights = (64 - ones) / weight_list
+    
+    print(weights)
+
+    df["ones_w"] = ones / weights
+
+    df.drop(columns="bin_data", inplace=True)
 
     return df
+
+def drop_bytes(df: pd.DataFrame):
+    df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True)
 
 pd.options.mode.chained_assignment = None # Chained assignment warning
 def compile_dataset(datasets):
@@ -95,8 +131,15 @@ def compile_dataset(datasets):
             else:
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
 
+    df_attack = count_ones_weighted(df_attack)
+    df_ambient = count_ones_weighted(df_ambient)
+    # df_attack = count_ones(df_attack)
+    # df_ambient = count_ones(df_ambient)
     # df_attack = merge_data_features(df_attack)
     # df_ambient = merge_data_features(df_ambient)
+
+    drop_bytes(df_attack)
+    drop_bytes(df_ambient)
 
     df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
     df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]

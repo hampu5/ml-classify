@@ -18,9 +18,9 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-dataset["remarks"] = "No DLC available"
-datasets["ROAD"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+# dataset["remarks"] = "No DLC available"
+# datasets["ROAD"] = dataset.to_dict("records")
 
 dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
 dataset["remarks"] = "-"
@@ -52,14 +52,14 @@ X_sampled, _, y_sampled, _ = train_test_split(X_sampled, y_sampled, train_size=0
 df_all = pd.concat([X_sampled, y_sampled], axis=1)
 print(df_all)
 
-df_all.drop(columns="Label", inplace=True, errors="ignore")
+# df_all.drop(columns="Label", inplace=True, errors="ignore")
 
 # Compute the correlation matrix
 corr = df_all.corr()
 
-# # Drop first row and last column that don't provide information
-# corr.drop(index=corr.index[0], inplace=True)
-# corr.drop(columns=corr.columns[-1], inplace=True)
+# Drop first row and last column that don't provide information
+corr.drop(index=corr.index[0], inplace=True)
+corr.drop(columns=corr.columns[-1], inplace=True)
 
 # Generate a mask for the upper triangle but not the diagonal
 mask = np.triu(np.ones_like(corr, dtype=bool))

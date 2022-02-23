@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use("pgf")
+# matplotlib.use("pgf")
 from matplotlib import pyplot as plt
 import pandas as pd
 from pandas.plotting import scatter_matrix
@@ -7,7 +7,7 @@ import numpy as np
 from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.metrics import f1_score
+from sklearn.metrics import cohen_kappa_score, confusion_matrix, f1_score
 from sklearn.model_selection import cross_val_score, train_test_split
 from joblib import dump, load
 from imblearn.under_sampling import RandomUnderSampler
@@ -27,9 +27,9 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-# dataset["remarks"] = "No DLC available"
-# datasets["ROAD"] = dataset.to_dict("records")
+dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+dataset["remarks"] = "No DLC available"
+datasets["ROAD"] = dataset.to_dict("records")
 
 dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
 dataset["remarks"] = "-"
@@ -55,7 +55,7 @@ df_attack = None # Release memory
 df_ambient = None # Release memory
 
 
-df_all.drop(columns=["DLC", "t", "type"], inplace=True, errors="ignore")
+df_all.drop(columns=["DLC", "t", "type", "data"], inplace=True, errors="ignore")
 
 print(df_all)
 
@@ -64,9 +64,9 @@ y_sampled = df_all["Label"]
 
 df_all = None # Release memory
 
-# # Use under-sampling on the majority Label (0, no attack)
-# rus = RandomUnderSampler(random_state=0)
-# X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
+# Use under-sampling on the majority Label (0, no attack)
+rus = RandomUnderSampler(random_state=0)
+X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
 
 # Split dataset into training and test data
 X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=2, shuffle=True, stratify=y_sampled)
@@ -74,15 +74,15 @@ X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_s
 X_sampled = None # Release memory
 y_sampled = None # Release memory
 
-# Use under-sampling on the majority Label (0, no attack)
-rus = RandomUnderSampler(random_state=0)
-X_train, y_train = rus.fit_resample(X_train, y_train)
+# # Use under-sampling on the majority Label (0, no attack)
+# rus = RandomUnderSampler(random_state=0)
+# X_train, y_train = rus.fit_resample(X_train, y_train)
 
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 # Classification with Random Forest
-clf = RandomForestClassifier(n_estimators=20, random_state=0, max_depth=20, max_leaf_nodes=50).fit(X_train, y_train)
+clf = RandomForestClassifier(n_estimators=20, random_state=0).fit(X_train, y_train)
 print("Random Forest model fitted!")
 avg_depth = 0
 avg_leaves = 0
@@ -111,14 +111,21 @@ print("Test data has been Classified!")
 f1_scores = f1_score(y_test, pred, average='weighted')
 print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
 
+kappa_scores = cohen_kappa_score(y_test, pred)
+print("Kappa score:  %0.4f(+/- %0.4f)" % (kappa_scores.mean(), kappa_scores.std()))
+
+cm = confusion_matrix(y_test, pred)
+print(cm)
+
 # shap.initjs()
 # explainer = shap.TreeExplainer(clf)
 # print("Explainer created!")
 # shap_values = explainer.shap_values(X_train)
 # print("Shap values created!")
+
 # dump(shap_values, "RF_Survival_Shap.joblib")
 
-# # shap_values = load("RF_ROAD_Shap.joblib")
+# shap_values = load("RF_ROAD_Shap.joblib")
 
 # # Make sure that the ingested SHAP model (a TreeEnsemble object) makes the
 # # same predictions as the original model
@@ -128,3 +135,4 @@ print("Testing F1:  %0.4f(+/- %0.4f)" % (f1_scores.mean(), f1_scores.std()))
 # assert np.abs(explainer.expected_value + explainer.shap_values(X_test).sum(1) - clf.predict(X_test)).max() < 1e-4
 
 # shap.summary_plot(shap_values[1], X_train)
+# plt.show()
