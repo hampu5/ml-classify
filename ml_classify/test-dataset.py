@@ -31,9 +31,9 @@ dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
 dataset["remarks"] = "No DLC available"
 datasets["ROAD"] = dataset.to_dict("records")
 
-dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-dataset["remarks"] = "-"
-datasets["Survival"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+# dataset["remarks"] = "-"
+# datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -82,14 +82,14 @@ print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 # Classification with Random Forest
-clf = RandomForestClassifier(n_estimators=20, random_state=0).fit(X_train, y_train)
+clf = RandomForestClassifier(n_estimators=20, random_state=0, max_leaf_nodes=300).fit(X_train, y_train)
 print("Random Forest model fitted!")
 avg_depth = 0
 avg_leaves = 0
 for clf_est in clf.estimators_:
     depth = clf_est.get_depth()
     leaves = clf_est.get_n_leaves()
-    print(f"{depth}       {leaves}")
+    # print(f"{depth}       {leaves}")
     avg_depth += depth
     avg_leaves += leaves
 avg_depth /= len(clf.estimators_)

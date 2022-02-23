@@ -77,7 +77,6 @@ def get_binary_payload(df: pd.DataFrame):
     df_data = df_data.apply(lambda col: col.apply(lambda val: f"{val:08b}"))
 
     df["bin_data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
-    print(df)
     
     return df
 
@@ -94,10 +93,8 @@ def count_ones(df: pd.DataFrame):
 def count_ones_weighted(df: pd.DataFrame):
     df = get_binary_payload(df)
     ones = df["bin_data"].apply(lambda val: val.count("1"))
-    weight_list = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
-    weights = (64 - ones) / weight_list
-    
-    print(weights)
+    weights = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
+    weights = (64 - ones) / weights
 
     df["ones_w"] = ones / weights
 
@@ -131,10 +128,10 @@ def compile_dataset(datasets):
             else:
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
 
-    df_attack = count_ones_weighted(df_attack)
-    df_ambient = count_ones_weighted(df_ambient)
-    # df_attack = count_ones(df_attack)
-    # df_ambient = count_ones(df_ambient)
+    # df_attack = count_ones_weighted(df_attack)
+    # df_ambient = count_ones_weighted(df_ambient)
+    df_attack = count_ones(df_attack)
+    df_ambient = count_ones(df_ambient)
     # df_attack = merge_data_features(df_attack)
     # df_ambient = merge_data_features(df_ambient)
 
