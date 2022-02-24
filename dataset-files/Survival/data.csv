@@ -1,0 +1,13 @@
+name,filename,class,type,rows,has_label,has_attack
+Fuzzy_dataset_SONATA,data/Fuzzy_dataset_SONATA.csv.zip,Sonata,fuzz,135670,True,True
+FreeDrivingData_20180323_SONATA,data/FreeDrivingData_20180323_SONATA.csv.zip,Sonata,none,117173,True,False
+Flooding_dataset_SONATA,data/Flooding_dataset_SONATA.csv.zip,Sonata,flood,149547,True,True
+Malfunction_dataset_SONATA,data/Malfunction_dataset_SONATA.csv.zip,Sonata,fabr,132651,True,True
+FreeDrivingData_20180112_KIA,data/FreeDrivingData_20180112_KIA.csv.zip,Soul,none,192516,True,False
+Flooding_dataset_KIA,data/Flooding_dataset_KIA.csv.zip,Soul,flood,181901,True,True
+Fuzzy_dataset_KIA,data/Fuzzy_dataset_KIA.csv.zip,Soul,fuzz,249990,True,True
+Malfunction153_dataset_KIA,data/Malfunction153_dataset_KIA.csv.zip,Soul,fabr,173436,True,True
+Fuzzy_dataset_Spark,data/Fuzzy_dataset_Spark.csv.zip,Spark,fuzz,65665,True,True
+Flooding_dataset_Spark,data/Flooding_dataset_Spark.csv.zip,Spark,flood,120570,True,True
+Malfunction18E_dataset_Spark,data/Malfunction18E_dataset_Spark.csv.zip,Spark,fabr,79787,True,True
+FreeDrivingData_20171231_Spark,data/FreeDrivingData_20171231_Spark.csv.zip,Spark,none,136934,True,False
