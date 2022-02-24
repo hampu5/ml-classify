@@ -1,3 +1,4 @@
+from timeit import timeit
 import matplotlib
 # matplotlib.use("pgf")
 from matplotlib import pyplot as plt
@@ -27,13 +28,13 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-dataset["remarks"] = "No DLC available"
-datasets["ROAD"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+# dataset["remarks"] = "No DLC available"
+# datasets["ROAD"] = dataset.to_dict("records")
 
-# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-# dataset["remarks"] = "-"
-# datasets["Survival"] = dataset.to_dict("records")
+dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+dataset["remarks"] = "-"
+datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -118,10 +119,15 @@ cm = confusion_matrix(y_test, pred)
 print(cm)
 
 # shap.initjs()
-# explainer = shap.TreeExplainer(clf)
-# print("Explainer created!")
-# shap_values = explainer.shap_values(X_train)
-# print("Shap values created!")
+explainer = shap.TreeExplainer(clf)
+print("Explainer created!")
+shap_values = explainer.shap_values(X_test[:1])
+print("Shap values created!")
+est_time = timeit(lambda: explainer(X_test[:1]), number=1)
+
+print(est_time)
+print(X_test[:1])
+print(shap_values)
 
 # dump(shap_values, "RF_Survival_Shap.joblib")
 
@@ -134,5 +140,12 @@ print(cm)
 # # make sure the SHAP values sum up to the model output (this is the local accuracy property)
 # assert np.abs(explainer.expected_value + explainer.shap_values(X_test).sum(1) - clf.predict(X_test)).max() < 1e-4
 
+
+# shap.waterfall_plot(shap.Explanation(values=shap_values[int("which_class")][row], 
+#                                          base_values=explainer.expected_value[int(which_class)], 
+#                                          data=X_test.iloc[row],  # added this line
+#                                          feature_names=X_test.columns.tolist()))
+shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns, matplotlib=True)
+# shap.plots.scatter(shap_values[:,"ones_w"])
 # shap.summary_plot(shap_values[1], X_train)
-# plt.show()
+plt.show()
