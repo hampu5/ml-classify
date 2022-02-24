@@ -56,7 +56,7 @@ df_attack = None # Release memory
 df_ambient = None # Release memory
 
 
-df_all.drop(columns=["DLC", "t", "data"], inplace=True, errors="ignore")
+df_all.drop(columns=["DLC", "t", "data", "type"], inplace=True, errors="ignore")
 
 print(df_all)
 
@@ -147,7 +147,8 @@ print(cm)
 #                                          base_values=explainer.expected_value[int(which_class)], 
 #                                          data=X_test.iloc[row],  # added this line
 #                                          feature_names=X_test.columns.tolist()))
-# shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns, matplotlib=True)
+# shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns)
+
 # shap.plots.scatter(shap_values[:,"ones_w"])
 # shap.summary_plot(shap_values[1], X_train)
 # plt.show()
