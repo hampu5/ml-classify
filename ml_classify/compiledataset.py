@@ -130,13 +130,13 @@ def compile_dataset(datasets):
 
     # df_attack = count_ones_weighted(df_attack)
     # df_ambient = count_ones_weighted(df_ambient)
-    df_attack = count_ones(df_attack)
-    df_ambient = count_ones(df_ambient)
+    # df_attack = count_ones(df_attack)
+    # df_ambient = count_ones(df_ambient)
     # df_attack = merge_data_features(df_attack)
     # df_ambient = merge_data_features(df_ambient)
 
-    drop_bytes(df_attack)
-    drop_bytes(df_ambient)
+    # drop_bytes(df_attack)
+    # drop_bytes(df_ambient)
 
     df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
     df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]

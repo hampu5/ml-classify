@@ -56,7 +56,7 @@ df_attack = None # Release memory
 df_ambient = None # Release memory
 
 
-df_all.drop(columns=["DLC", "t", "type", "data"], inplace=True, errors="ignore")
+df_all.drop(columns=["DLC", "t", "data"], inplace=True, errors="ignore")
 
 print(df_all)
 
@@ -81,6 +81,8 @@ y_sampled = None # Release memory
 
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
+
+
 
 # Classification with Random Forest
 clf = RandomForestClassifier(n_estimators=20, random_state=0, max_leaf_nodes=300).fit(X_train, y_train)
@@ -119,15 +121,15 @@ cm = confusion_matrix(y_test, pred)
 print(cm)
 
 # shap.initjs()
-explainer = shap.TreeExplainer(clf)
-print("Explainer created!")
-shap_values = explainer.shap_values(X_test[:1])
-print("Shap values created!")
-est_time = timeit(lambda: explainer(X_test[:1]), number=1)
+# explainer = shap.TreeExplainer(clf)
+# print("Explainer created!")
+# shap_values = explainer.shap_values(X_test[:1])
+# print("Shap values created!")
+# est_time = timeit(lambda: explainer(X_test[:1]), number=1)
 
-print(est_time)
-print(X_test[:1])
-print(shap_values)
+# print(est_time)
+# print(X_test[:1])
+# print(shap_values)
 
 # dump(shap_values, "RF_Survival_Shap.joblib")
 
@@ -145,7 +147,7 @@ print(shap_values)
 #                                          base_values=explainer.expected_value[int(which_class)], 
 #                                          data=X_test.iloc[row],  # added this line
 #                                          feature_names=X_test.columns.tolist()))
-shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns, matplotlib=True)
+# shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns, matplotlib=True)
 # shap.plots.scatter(shap_values[:,"ones_w"])
 # shap.summary_plot(shap_values[1], X_train)
-plt.show()
+# plt.show()
