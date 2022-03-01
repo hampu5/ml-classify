@@ -28,13 +28,13 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-# dataset["remarks"] = "No DLC available"
-# datasets["ROAD"] = dataset.to_dict("records")
+dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+dataset["remarks"] = "No DLC available"
+datasets["ROAD"] = dataset.to_dict("records")
 
-dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-dataset["remarks"] = "-"
-datasets["Survival"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+# dataset["remarks"] = "-"
+# datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -56,9 +56,13 @@ df_attack = None # Release memory
 df_ambient = None # Release memory
 
 
-df_all.drop(columns=["DLC", "t", "data"], inplace=True, errors="ignore")
+# grouped = df.groupby(df.color)
+# df_new = grouped.get_group("E")
 
-print(df_all)
+
+df_all.drop(columns=["DLC", "t", "data", "type", "ID"], inplace=True, errors="ignore")
+
+print(df_all[df_all["ones_w"].isna()])
 
 X_sampled = df_all.drop(columns="Label")
 y_sampled = df_all["Label"]
