@@ -79,17 +79,19 @@ df_all = None # Release memory
 # d_temp = None
 
 # Split dataset into training and test data
-X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=2, shuffle=True, stratify=y_sampled)
+X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=None, shuffle=True, stratify=y_sampled)
 
 X_sampled = None # Release memory
 y_sampled = None # Release memory
 
+print("Test and training data created!")
+# print(f"Types (after stratification)\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
+
 # X_train.drop(columns="type", inplace=True, errors="ignore")
 # X_test.drop(columns="type", inplace=True, errors="ignore")
 
-# Use under-sampling on the majority Label (0, no attack)
-rus = RandomUnderSampler(random_state=0)
-X_train, y_train = rus.fit_resample(X_train, y_train)
+
+# print(f"Types (after under-sampling)\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 d_temp: pd.DataFrame = pd.concat([X_train, y_train], axis="columns")
 d_temp.drop(columns="type", inplace=True, errors="ignore")
@@ -101,9 +103,11 @@ X_test = d_temp.drop(columns="Label")
 y_test = d_temp["Label"]
 d_temp = None
 
+# Use under-sampling on the majority Label (0, no attack)
+rus = RandomUnderSampler(random_state=0)
+X_train, y_train = rus.fit_resample(X_train, y_train)
 
-print("Test and training data created!")
-print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
+print(f"Labels\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 
 
@@ -144,12 +148,12 @@ cm = confusion_matrix(y_test, pred)
 print(cm)
 
 # shap.initjs()
-# explainer = shap.TreeExplainer(clf)
-# print("Explainer created!")
-# shap_values = explainer.shap_values(X_test[:1])
-# print("Shap values created!")
+explainer = shap.TreeExplainer(clf)
+print("Explainer created!")
+shap_values = explainer.shap_values(X_test[:1000])
+print("Shap values created!")
 # est_time = timeit(lambda: explainer(X_test[:1]), number=1)
-
+print(shap_values)
 # print(est_time)
 # print(X_test[:1])
 # print(shap_values)
@@ -173,5 +177,5 @@ print(cm)
 # shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns)
 
 # shap.plots.scatter(shap_values[:,"ones_w"])
-# shap.summary_plot(shap_values[1], X_train)
+shap.summary_plot(shap_values[1], X_test.columns)
 # plt.show()

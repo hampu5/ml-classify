@@ -6,9 +6,13 @@ import re
 # Helpers
 
 def count_bit(val, bit):
+    if isinstance(val, str):
+        return val.count(bit)
     return bin(val).count(bit)
 
 def count_bit_bins(val, split_bit):
+    if isinstance(val, str):
+        return len(list(filter(None, re.split(f"{split_bit}+", val))))
     return len(list(filter(None, re.split(f"{split_bit}+", bin(val)))))
 
 def format_binary(val):
@@ -100,6 +104,10 @@ def count_ones(df: pd.DataFrame):
 
     assert not df["ones"].isnull().values.any(axis=None)
 
+    df["ones_ID"] = df["ID"].apply(count_bit, args="1")
+
+    assert not df["ones_ID"].isnull().values.any(axis=None)
+
 def get_binary_payload(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
     drop_bytes(df)
@@ -114,14 +122,10 @@ def get_binary_payload(df: pd.DataFrame):
 
 def count_ones_weighted(df: pd.DataFrame):
     get_binary_payload(df)
-    # ones = df["bin_data"].apply(lambda val: val.count("1"))
-    # weights = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
-    # df.drop(columns="bin_data", inplace=True)
     
-    # df["ones_w"] = ones / ((64 - ones) / weights)
-    zeros = df["bin_data"].apply(lambda val: val.count("0"))
-    df["ones_w"] = df["bin_data"].apply(lambda val: val.count("1"))
-    df["ones_w"] *= df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
+    zeros = df["bin_data"].apply(count_bit, args="0")
+    df["ones_w"] = df["bin_data"].apply(count_bit, args="1")
+    df["ones_w"] *= df["bin_data"].apply(count_bit_bins, args="0")
     df.drop(columns="bin_data", inplace=True)
     
     zeros.replace(0, 1, inplace=True)
@@ -161,8 +165,8 @@ def drop_bytes(df: pd.DataFrame):
 
 def new_feature(df):
     # count_ones_weighted2(df)
-    count_ones_weighted(df)
-    # count_ones(df)
+    # count_ones_weighted(df)
+    count_ones(df)
     # df = merge_data_features(df)
 
     assert not df.isnull().values.any(axis=None)
@@ -189,7 +193,6 @@ def feature_creation(df: pd.DataFrame):
 
     return df
 
-# pd.options.mode.chained_assignment = None # Chained assignment warning
 def compile_dataset(datasets):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
@@ -205,7 +208,6 @@ def compile_dataset(datasets):
             # df["name"] = name
             df["type"] = "none"
             df.loc[df["Label"] == 1, "type"] = atype
-            # df["type"][df["Label"] == 1] = atype
             # print(df["type"])
             if has_attack:
                 df_attack = pd.concat([df_attack, df], ignore_index=True)
