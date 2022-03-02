@@ -28,13 +28,13 @@ PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
 PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
 
-dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-dataset["remarks"] = "No DLC available"
-datasets["ROAD"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
+# dataset["remarks"] = "No DLC available"
+# datasets["ROAD"] = dataset.to_dict("records")
 
-# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-# dataset["remarks"] = "-"
-# datasets["Survival"] = dataset.to_dict("records")
+dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+dataset["remarks"] = "-"
+datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -60,18 +60,23 @@ df_ambient = None # Release memory
 # df_new = grouped.get_group("E")
 
 
-df_all.drop(columns=["DLC", "t", "data", "type", "ID"], inplace=True, errors="ignore")
+df_all.drop(columns=["DLC", "t", "data", "ID"], inplace=True, errors="ignore")
 
-print(df_all[df_all["ones_w"].isna()])
+assert not df_all.isnull().values.any(axis=None)
 
-X_sampled = df_all.drop(columns="Label")
-y_sampled = df_all["Label"]
+X_sampled = df_all.drop(columns="type")
+y_sampled = df_all["type"]
 
 df_all = None # Release memory
 
-# Use under-sampling on the majority Label (0, no attack)
-rus = RandomUnderSampler(random_state=0)
-X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
+# # Use under-sampling on the majority Label (0, no attack)
+# rus = RandomUnderSampler(random_state=0)
+# X_sampled, y_sampled = rus.fit_resample(X_sampled, y_sampled)
+
+# d_temp: pd.DataFrame = pd.concat([X_sampled, y_sampled], axis="columns")
+# X_sampled = d_temp.drop(columns="type")
+# y_sampled = d_temp["type"]
+# d_temp = None
 
 # Split dataset into training and test data
 X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=2, shuffle=True, stratify=y_sampled)
@@ -79,9 +84,23 @@ X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_s
 X_sampled = None # Release memory
 y_sampled = None # Release memory
 
-# # Use under-sampling on the majority Label (0, no attack)
-# rus = RandomUnderSampler(random_state=0)
-# X_train, y_train = rus.fit_resample(X_train, y_train)
+# X_train.drop(columns="type", inplace=True, errors="ignore")
+# X_test.drop(columns="type", inplace=True, errors="ignore")
+
+# Use under-sampling on the majority Label (0, no attack)
+rus = RandomUnderSampler(random_state=0)
+X_train, y_train = rus.fit_resample(X_train, y_train)
+
+d_temp: pd.DataFrame = pd.concat([X_train, y_train], axis="columns")
+d_temp.drop(columns="type", inplace=True, errors="ignore")
+X_train = d_temp.drop(columns="Label")
+y_train = d_temp["Label"]
+d_temp: pd.DataFrame = pd.concat([X_test, y_test], axis="columns")
+d_temp.drop(columns="type", inplace=True, errors="ignore")
+X_test = d_temp.drop(columns="Label")
+y_test = d_temp["Label"]
+d_temp = None
+
 
 print("Test and training data created!")
 print(f"Train: {np.bincount(y_train)} Test: {np.bincount(y_test)}")

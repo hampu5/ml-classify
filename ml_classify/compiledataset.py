@@ -3,6 +3,17 @@ import numpy as np
 import pandas as pd
 import re
 
+# Helpers
+
+def count_bit(val, bit):
+    return bin(val).count(bit)
+
+def count_bit_bins(val, split_bit):
+    return len(list(filter(None, re.split(f"{split_bit}+", bin(val)))))
+
+def format_binary(val):
+    return f"{val:08b}"
+
 
 # Loading different datasets
 def load_dataset(path, filename) -> pd.DataFrame:
@@ -25,13 +36,15 @@ def get_datasets(dataset):
 # various functions to get the data into the format we want
 
 # helper function to translate absolute time to relative time
-def calc_relative_time(AT):
-    dt = AT.diff()
-    dt[0] = dt.mean() # fill the missing first element
-    return dt
+def calc_relative_time(df: pd.DataFrame):
+    dt = df["t"].diff()
+    dt.iloc[0] = dt.mean() # fill the missing first element
+    df["dt"] = dt
+
+    assert not df["dt"].isnull().values.any(axis=None)
 
 # Calculate relative time between IDs
-def calc_relative_time_per_id(df):
+def calc_relative_time_per_id(df: pd.DataFrame):
     df["dt_ID"] = df.groupby(by="ID")["t"].diff()
 
     nans_idx = df["dt_ID"].index[df["dt_ID"].apply(np.isnan)]
@@ -46,7 +59,8 @@ def calc_relative_time_per_id(df):
     tmp.iloc[nans_idx] = nans_vals
     df["dt_ID"] = tmp
 
-    assert df.dt_ID.isnull().sum() == 0
+    assert not df["dt_ID"].isnull().values.any(axis=None)
+    # assert df["dt_ID"].isnull().sum() == 0
 
 def read_file(filename):
     df = pd.read_csv(filename)
@@ -54,7 +68,7 @@ def read_file(filename):
     if "Timestamp" in df.columns:
         df.rename(columns={'Timestamp':'t'}, inplace=True)
     
-    df["dt"] = calc_relative_time(df["t"])
+    calc_relative_time(df)
     calc_relative_time_per_id(df)
     
     return df
@@ -79,84 +93,103 @@ def count_ones(df: pd.DataFrame):
     # ones = pd.Series
     df["ones"] = 0
     for col in df_data:
-        temp = df_data[col].apply(lambda val: bin(val).count("1"))
+        temp = df_data[col].apply(count_bit, args="1")
         df["ones"] += temp
     
-    return df
+    df_data = None
 
-def format_binary(val):
-    return f"{val:08b}"
+    assert not df["ones"].isnull().values.any(axis=None)
 
 def get_binary_payload(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
     drop_bytes(df)
-    # df_data = df_data.apply(lambda col: col.apply(lambda val: f"{val:08b}"))
-    # df_data = f"{df_data:08b}"
-    # df_data = "{:08b}".format(df_data)
+
     df_data = df_data.applymap(format_binary)
     
     df["bin_data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    
     df_data = None
     
-    return df
+    assert not df["bin_data"].isnull().values.any(axis=None)
 
 def count_ones_weighted(df: pd.DataFrame):
-    df = get_binary_payload(df)
-    ones = df["bin_data"].apply(lambda val: val.count("1"))
-    weights = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
+    get_binary_payload(df)
+    # ones = df["bin_data"].apply(lambda val: val.count("1"))
+    # weights = df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
+    # df.drop(columns="bin_data", inplace=True)
+    
+    # df["ones_w"] = ones / ((64 - ones) / weights)
+    zeros = df["bin_data"].apply(lambda val: val.count("0"))
+    df["ones_w"] = df["bin_data"].apply(lambda val: val.count("1"))
+    df["ones_w"] *= df["bin_data"].apply(lambda val: len(list(filter(None, re.split("1+", val)))) )
     df.drop(columns="bin_data", inplace=True)
     
-    df["ones_w"] = ones / ((64 - ones) / weights)
+    zeros.replace(0, 1, inplace=True)
+    df["ones_w"] /= zeros
+    zeros = None
 
-    return df
+    df["ones_w"].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+    assert not df["ones_w"].isnull().values.any(axis=None)
 
 def count_ones_weighted2(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
-    # ones = pd.Series
-    df["weights"] = 0
-    df["ones"] = 0
-    for col in df_data:
-        df["ones"] += df_data[col].apply(lambda val: bin(val).count("1"))
-        df["weights"] += df_data[col].apply( lambda val: len(list(filter(None, re.split("1+", bin(val))))) )
-    
-    print(df["weights"])
-    
-    df["ones"] /= (64 - df["ones"]) / df["weights"]
+    drop_bytes(df)
 
+    df["ones_w"] = 0
+    zeros = df["ones_w"].copy()
+    df["weights"] = 0
+    for col in df_data:
+        print(col)
+        zeros += df_data[col].apply(count_bit, args="0")
+        df["ones_w"] += df_data[col].apply(count_bit, args="1")
+        df["weights"] += df_data[col].apply(count_bit_bins, args="1")
+    
+    df["ones_w"] *= df["weights"]
     df.drop(columns="weights", inplace=True)
 
-    return df
+    zeros.replace(0, 1, inplace=True)
+    df["ones_w"] /= zeros
+    zeros = None
+
+    df["ones_w"].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+    assert not df["ones_w"].isnull().values.any(axis=None)
 
 def drop_bytes(df: pd.DataFrame):
     df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True, errors="ignore")
 
 def new_feature(df):
-    # df = count_ones_weighted2(df)
-    df = count_ones_weighted(df)
-    # df = count_ones(df)
+    # count_ones_weighted2(df)
+    count_ones_weighted(df)
+    # count_ones(df)
     # df = merge_data_features(df)
 
+    assert not df.isnull().values.any(axis=None)
+    
     return df
 
 def feature_creation(df: pd.DataFrame):
-    size = len(df.index)
-    number_of_splits = ceil(size / 5000000)
-    splits = np.array_split(df, number_of_splits)
-    df = pd.DataFrame
+    # size = len(df.index)
+    # number_of_splits = ceil(size / 5000000)
+    # splits = np.array_split(df, number_of_splits)
+    # df = pd.DataFrame
 
-    for split in splits:
-        if df.empty:
-            df = new_feature(split)
-        else:
-            df = pd.concat([df, new_feature(split)], ignore_index=True)
-        split = None
-        print(df)
-    
+    # for split in splits:
+    #     if df.empty:
+    #         df = new_feature(split)
+    #     else:
+    #         df = pd.concat([df, new_feature(split)], ignore_index=True)
+    #     split = None
+    #     print(df)
+    df = new_feature(df)
     drop_bytes(df)
+
+    assert not df.isnull().values.any(axis=None)
 
     return df
 
-pd.options.mode.chained_assignment = None # Chained assignment warning
+# pd.options.mode.chained_assignment = None # Chained assignment warning
 def compile_dataset(datasets):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
@@ -171,9 +204,9 @@ def compile_dataset(datasets):
             df = read_file(filename)
             # df["name"] = name
             df["type"] = "none"
-            # df.loc["type", df["Label"] == 1] = atype
-            df["type"][df["Label"] == 1] = atype
-
+            df.loc[df["Label"] == 1, "type"] = atype
+            # df["type"][df["Label"] == 1] = atype
+            # print(df["type"])
             if has_attack:
                 df_attack = pd.concat([df_attack, df], ignore_index=True)
             else:
@@ -184,4 +217,8 @@ def compile_dataset(datasets):
 
     df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
     df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]
+
+    assert not df_attack.isnull().values.any(axis=None)
+    assert not df_ambient.isnull().values.any(axis=None)
+
     return df_attack, df_ambient
