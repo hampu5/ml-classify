@@ -79,7 +79,7 @@ df_all = None # Release memory
 # d_temp = None
 
 # Split dataset into training and test data
-X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=None, shuffle=True, stratify=y_sampled)
+X_train, X_test, y_train, y_test = train_test_split(X_sampled, y_sampled, test_size=0.3, random_state=0, shuffle=True, stratify=y_sampled)
 
 X_sampled = None # Release memory
 y_sampled = None # Release memory
@@ -150,10 +150,11 @@ print(cm)
 # shap.initjs()
 explainer = shap.TreeExplainer(clf)
 print("Explainer created!")
-shap_values = explainer.shap_values(X_test[:1000])
+shap_values = explainer(X_test.sample(1000, random_state=0))
 print("Shap values created!")
 # est_time = timeit(lambda: explainer(X_test[:1]), number=1)
-print(shap_values)
+shap_values = shap.Explanation(shap_values[:, :, 1], feature_names=X_test.columns)
+
 # print(est_time)
 # print(X_test[:1])
 # print(shap_values)
@@ -177,5 +178,6 @@ print(shap_values)
 # shap.force_plot(explainer.expected_value[1], shap_values[1], features=X_test[:1], feature_names=X_test.columns)
 
 # shap.plots.scatter(shap_values[:,"ones_w"])
-shap.summary_plot(shap_values[1], X_test.columns)
+# shap.summary_plot(shap_values[1], X_test.columns)
+shap.plots.beeswarm(shap_values)
 # plt.show()
