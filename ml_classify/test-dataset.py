@@ -64,10 +64,14 @@ df_all.drop(columns=["DLC", "t", "data", "ID"], inplace=True, errors="ignore")
 
 assert not df_all.isnull().values.any(axis=None)
 
+
+
 X_sampled = df_all.drop(columns="type")
 y_sampled = df_all["type"]
 
 df_all = None # Release memory
+
+
 
 # # Use under-sampling on the majority Label (0, no attack)
 # rus = RandomUnderSampler(random_state=0)
@@ -109,6 +113,34 @@ X_train, y_train = rus.fit_resample(X_train, y_train)
 
 print(f"Labels\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
+
+# # Chi Squared test
+
+# chi_scores = chi2(X_train, y_train)
+# p_values = pd.Series(chi_scores[1], index=X_train.columns)
+# p_values.sort_values(ascending=False, inplace=True)
+# p_values.plot.bar()
+# plt.show()
+# exit()
+
+# Distribution of Labels to counted ones
+df_all = pd.concat([X_train, y_train], axis="columns")
+# size = len(df_all.index)
+ones_prob = []
+for i in range(64):
+    # size = len(df_all.loc[(df_all["ones"] == i)].index)
+    prob = len(df_all.loc[(df_all["ones"] == i) & (df_all["Label"] == 1)].index)
+    print(prob)
+    ones_prob.append(prob)
+
+ones_prob = pd.Series(ones_prob)
+# sns.lineplot(data=ones_prob)
+
+plt.bar(x=range(0, 64), height=ones_prob)
+plt.xlabel("Number of ones counted")
+plt.ylabel("% of observations where Label is 1 (is attack)")
+plt.show()
+exit()
 
 
 # Classification with Random Forest
