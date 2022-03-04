@@ -98,11 +98,11 @@ print("Test and training data created!")
 # print(f"Types (after under-sampling)\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 d_temp: pd.DataFrame = pd.concat([X_train, y_train], axis="columns")
-d_temp.drop(columns="type", inplace=True, errors="ignore")
+# d_temp.drop(columns="type", inplace=True, errors="ignore")
 X_train = d_temp.drop(columns="Label")
 y_train = d_temp["Label"]
 d_temp: pd.DataFrame = pd.concat([X_test, y_test], axis="columns")
-d_temp.drop(columns="type", inplace=True, errors="ignore")
+# d_temp.drop(columns="type", inplace=True, errors="ignore")
 X_test = d_temp.drop(columns="Label")
 y_test = d_temp["Label"]
 d_temp = None
@@ -125,21 +125,37 @@ print(f"Labels\n\tTrain: {np.bincount(y_train)} Test: {np.bincount(y_test)}")
 
 # Distribution of Labels to counted ones
 df_all = pd.concat([X_train, y_train], axis="columns")
-# size = len(df_all.index)
-ones_prob = []
+size = len(df_all.loc[df_all["Label"] == 1].index)
+ones_prob = [[], [], []]
+# zeros_prob = []
 for i in range(64):
-    # size = len(df_all.loc[(df_all["ones"] == i)].index)
-    prob = len(df_all.loc[(df_all["ones"] == i) & (df_all["Label"] == 1)].index)
-    print(prob)
-    ones_prob.append(prob)
+    # zeros_prob.append(len(df_all.loc[(df_all["Label"] == 0) & (df_all["ones"] == i)].index) / size)
 
+    prob_flood = len(df_all.loc[(df_all["Label"] == 1) & (df_all["ones"] == i) & (df_all["type"] == "flood")].index) / size
+    prob_fuzz = len(df_all.loc[(df_all["Label"] == 1) & (df_all["ones"] == i) & (df_all["type"] == "fuzz")].index) / size
+    prob_fabr = len(df_all.loc[(df_all["Label"] == 1) & (df_all["ones"] == i) & (df_all["type"] == "fabr")].index) / size
+    ones_prob[0].append(prob_flood)
+    ones_prob[1].append(prob_fuzz)
+    ones_prob[2].append(prob_fabr)
+
+
+# zeros_prob = pd.Series(zeros_prob)
 ones_prob = pd.Series(ones_prob)
 # sns.lineplot(data=ones_prob)
 
-plt.bar(x=range(0, 64), height=ones_prob)
+plt.bar(x=range(0, 64), height=ones_prob[0])
+plt.bar(x=range(0, 64), height=ones_prob[1])
+plt.bar(x=range(0, 64), height=ones_prob[2])
+plt.legend(labels=["Flooding", "Fuzzing", "Fabrication"])
+# plt.bar(x=range(0, 64), height=zeros_prob)
 plt.xlabel("Number of ones counted")
-plt.ylabel("% of observations where Label is 1 (is attack)")
+plt.ylabel("% of no attack observations (Label = 1)")
 plt.show()
+
+df_attacktype = df_all.loc[(df_all["Label"] == 1) & (df_all["type"] == "fabr")]
+print(df_attacktype)
+print(f"bins: {np.bincount(df_attacktype.d0)}")
+
 exit()
 
 

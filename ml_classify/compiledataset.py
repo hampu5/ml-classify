@@ -187,7 +187,7 @@ def feature_creation(df: pd.DataFrame):
     #     split = None
     #     print(df)
     df = new_feature(df)
-    drop_bytes(df)
+    # drop_bytes(df)
 
     assert not df.isnull().values.any(axis=None)
 
