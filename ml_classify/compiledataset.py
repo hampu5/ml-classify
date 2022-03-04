@@ -22,7 +22,7 @@ def format_binary(val):
 # Loading different datasets
 def load_dataset(path, filename) -> pd.DataFrame:
     data = pd.read_csv(f"{path}/{filename}")
-    data["filename"] = data["filename"].apply(lambda x: path + x)
+    data["filename"] = data["filename"].apply(lambda filename: f"{path}/{filename}")
     data = data[["name", "type", "filename", "has_attack"]]
     return data
 
@@ -193,6 +193,8 @@ def feature_creation(df: pd.DataFrame):
 
     return df
 
+
+
 def compile_dataset(datasets):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
@@ -213,14 +215,11 @@ def compile_dataset(datasets):
                 df_attack = pd.concat([df_attack, df], ignore_index=True)
             else:
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
+    
+    df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
+    df_all = feature_creation(df_all)
+    df_all = df_all[[c for c in df_all if c not in ["Label"]] + ["Label"]]
 
-    df_attack = feature_creation(df_attack)
-    df_ambient = feature_creation(df_ambient)
+    assert not df_all.isnull().values.any(axis=None)
 
-    df_attack = df_attack[[c for c in df_attack if c not in ["Label"]] + ["Label"]]
-    df_ambient = df_ambient[[c for c in df_ambient if c not in ["Label"]] + ["Label"]]
-
-    assert not df_attack.isnull().values.any(axis=None)
-    assert not df_ambient.isnull().values.any(axis=None)
-
-    return df_attack, df_ambient
+    return df_all

@@ -14,6 +14,7 @@ tensorflow = "^2.7.0"
 seaborn = "^0.11.2"
 imbalanced-learn = "^0.9.0"
 ipython = "^8.0.1"
+ipykernel = "^6.9.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

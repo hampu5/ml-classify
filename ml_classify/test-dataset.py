@@ -22,19 +22,18 @@ from compiledataset import load_dataset, get_datasets, merge_data_features, comp
 
 datasets = {}
 
+PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL"
+PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival"
+PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen"
 
-PATH_ORNL = "/home/hampus/miun/master_thesis/Datasets/ORNL/"
-PATH_SURVIVAL = "/home/hampus/miun/master_thesis/Datasets/Survival/"
-PATH_HISINGEN = "/home/hampus/miun/master_thesis/Datasets/Hisingen/"
 
+dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data_a.csv")
+dataset["remarks"] = "No DLC available"
+datasets["ROAD"] = dataset.to_dict("records")
 
-# dataset: pd.DataFrame = load_dataset(PATH_ORNL, "data.csv")
-# dataset["remarks"] = "No DLC available"
-# datasets["ROAD"] = dataset.to_dict("records")
-
-dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
-dataset["remarks"] = "-"
-datasets["Survival"] = dataset.to_dict("records")
+# dataset: pd.DataFrame = load_dataset(PATH_SURVIVAL, "data.csv")
+# dataset["remarks"] = "-"
+# datasets["Survival"] = dataset.to_dict("records")
 
 # dataset: pd.DataFrame = load_dataset(PATH_HISINGEN, "data.csv")
 # dataset["remarks"] = "-"
@@ -42,18 +41,18 @@ datasets["Survival"] = dataset.to_dict("records")
 
 dataset = None # Release memory, as it isn't used for now
 
+df_all = compile_dataset(datasets)
+# df_attack, df_ambient = compile_dataset(datasets)
+# df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
+# attack_mean = df_attack["dt"].min()
+# ambient_mean = df_ambient["dt"].min()
+# all_mean = df_all["dt"].min()
+# print(f"attacks dt min: {attack_mean}")
+# print(f"ambient dt min: {ambient_mean}")
+# print(f"all dt min: {all_mean}")
 
-df_attack, df_ambient = compile_dataset(datasets)
-df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
-attack_mean = df_attack["dt"].min()
-ambient_mean = df_ambient["dt"].min()
-all_mean = df_all["dt"].min()
-print(f"attacks dt min: {attack_mean}")
-print(f"ambient dt min: {ambient_mean}")
-print(f"all dt min: {all_mean}")
-
-df_attack = None # Release memory
-df_ambient = None # Release memory
+# df_attack = None # Release memory
+# df_ambient = None # Release memory
 
 
 # grouped = df.groupby(df.color)
@@ -61,8 +60,6 @@ df_ambient = None # Release memory
 
 
 df_all.drop(columns=["DLC", "t", "data", "ID"], inplace=True, errors="ignore")
-
-assert not df_all.isnull().values.any(axis=None)
 
 
 
@@ -128,7 +125,7 @@ df_all = pd.concat([X_train, y_train], axis="columns")
 size = len(df_all.loc[df_all["Label"] == 1].index)
 ones_prob = [[], [], []]
 # zeros_prob = []
-for i in range(64):
+for i in range(65):
     # zeros_prob.append(len(df_all.loc[(df_all["Label"] == 0) & (df_all["ones"] == i)].index) / size)
 
     prob_flood = len(df_all.loc[(df_all["Label"] == 1) & (df_all["ones"] == i) & (df_all["type"] == "flood")].index) / size
@@ -143,18 +140,18 @@ for i in range(64):
 ones_prob = pd.Series(ones_prob)
 # sns.lineplot(data=ones_prob)
 
-plt.bar(x=range(0, 64), height=ones_prob[0])
-plt.bar(x=range(0, 64), height=ones_prob[1])
-plt.bar(x=range(0, 64), height=ones_prob[2])
-plt.legend(labels=["Flooding", "Fuzzing", "Fabrication"])
-# plt.bar(x=range(0, 64), height=zeros_prob)
+plt.bar(x=range(0, 65), height=ones_prob[0])
+# plt.bar(x=range(0, 65), height=ones_prob[1])
+plt.bar(x=range(0, 65), height=ones_prob[2])
+plt.legend(labels=["Masquerading", "Fuzzing", "Fabrication"])
+# plt.bar(x=range(0, 65), height=zeros_prob)
 plt.xlabel("Number of ones counted")
 plt.ylabel("% of no attack observations (Label = 1)")
 plt.show()
 
-df_attacktype = df_all.loc[(df_all["Label"] == 1) & (df_all["type"] == "fabr")]
-print(df_attacktype)
-print(f"bins: {np.bincount(df_attacktype.d0)}")
+# df_attacktype = df_all.loc[(df_all["Label"] == 1) & (df_all["type"] == "fabr")]
+# print(df_attacktype)
+# print(f"bins: {np.bincount(df_attacktype.d0)}")
 
 exit()
 
