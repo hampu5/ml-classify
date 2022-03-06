@@ -163,13 +163,13 @@ def count_ones_weighted2(df: pd.DataFrame):
 def drop_bytes(df: pd.DataFrame):
     df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True, errors="ignore")
 
-def new_feature(df):
+def new_feature(df: pd.DataFrame):
     # count_ones_weighted2(df)
     # count_ones_weighted(df)
     count_ones(df)
     # df = merge_data_features(df)
 
-    assert not df.isnull().values.any(axis=None)
+    # assert not df.isnull().values.any(axis=None)
     
     return df
 
@@ -189,13 +189,13 @@ def feature_creation(df: pd.DataFrame):
     df = new_feature(df)
     # drop_bytes(df)
 
-    assert not df.isnull().values.any(axis=None)
+    # assert not df.isnull().values.any(axis=None)
 
     return df
 
 
 
-def compile_dataset(datasets):
+def compile_dataset(datasets: dict):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
 
@@ -208,6 +208,7 @@ def compile_dataset(datasets):
             # remarks = dataitem["remarks"] or ""
             df = read_file(filename)
             # df["name"] = name
+            df["dataset"] = dname
             df["type"] = "none"
             df.loc[df["Label"] == 1, "type"] = atype
             # print(df["type"])
@@ -220,6 +221,6 @@ def compile_dataset(datasets):
     df_all = feature_creation(df_all)
     df_all = df_all[[c for c in df_all if c not in ["Label"]] + ["Label"]]
 
-    assert not df_all.isnull().values.any(axis=None)
+    # assert not df_all.isnull().values.any(axis=None)
 
     return df_all

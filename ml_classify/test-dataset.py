@@ -226,3 +226,46 @@ shap_values = shap.Explanation(shap_values[:, :, 1], feature_names=X_test.column
 # shap.summary_plot(shap_values[1], X_test.columns)
 shap.plots.beeswarm(shap_values)
 # plt.show()
+
+
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
+
+dnn = Sequential(
+    [
+        Dense(10, activation='relu', input_dim=4),
+        Dense(10, activation='relu'),
+        Dense(10, activation='relu'),
+        Dense(10, activation='relu'),
+        Dense(10, activation='relu'),
+        Dense(1, activation='sigmoid')
+    ]
+)
+
+dnn.compile(
+    optimizer="rmsprop",  # Optimizer
+    # Loss function to minimize
+    loss=keras.losses.BinaryCrossentropy(),
+    # List of metrics to monitor
+    metrics=[keras.metrics.BinaryAccuracy(), keras.metrics.Recall(), keras.metrics.FalseNegatives()],
+)
+
+# X_val = X_train[-10000:]
+# y_val = y_train[-10000:]
+# X_train = X_train[:-10000]
+# y_train = y_train[:-10000]
+
+dnn.fit(
+    X_train,
+    y_train,
+    batch_size=64,
+    epochs=2,
+    # We pass some validation for
+    # monitoring validation loss and metrics
+    # at the end of each epoch
+    # validation_data=(X_val, y_val),
+)
+
+results = dnn.evaluate(X_test, y_test, batch_size=128)
+print("test loss, test acc:", results)
