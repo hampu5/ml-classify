@@ -219,7 +219,7 @@ def compile_dataset(datasets: dict):
     
     df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
     df_all = feature_creation(df_all)
-    df_all = df_all[[c for c in df_all if c not in ["Label"]] + ["Label"]]
+    df_all = df_all[[c for c in df_all if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
 
     # assert not df_all.isnull().values.any(axis=None)
 
