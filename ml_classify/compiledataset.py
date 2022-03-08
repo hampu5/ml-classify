@@ -265,3 +265,35 @@ def compile_dataset(datasets: dict):
     # assert not df_all.isnull().values.any(axis=None)
 
     return df_all
+
+
+def compile_dataset_separate(datasets: dict):
+    df_attack = pd.DataFrame()
+    df_ambient = pd.DataFrame()
+
+    for dname, dataset in datasets.items():
+        for dataitem in dataset:
+            # name = dataitem["name"]
+            atype = dataitem["type"]
+            filename = dataitem["filename"]
+            has_attack = bool(dataitem["has_attack"])
+            # remarks = dataitem["remarks"] or ""
+            df = read_file(filename)
+            # df["name"] = name
+            df["dataset"] = dname
+            df["type"] = "none"
+            df.loc[df["Label"] == 1, "type"] = atype
+            # print(df["type"])
+            if has_attack:
+                df_attack = pd.concat([df_attack, df], ignore_index=True)
+            else:
+                df_ambient = pd.concat([df_ambient, df], ignore_index=True)
+    
+    df_attack = feature_creation(df_attack)
+    df_ambient = feature_creation(df_ambient)
+    df_attack = df_attack[[c for c in df_attack if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
+    df_ambient = df_ambient[[c for c in df_ambient if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
+
+    # assert not df_all.isnull().values.any(axis=None)
+
+    return df_attack, df_ambient
