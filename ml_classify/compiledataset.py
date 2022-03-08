@@ -3,6 +3,47 @@ import numpy as np
 import pandas as pd
 import re
 
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Dropout
+import keras_tuner as kt
+
+# Building the model with Keras Tuner
+
+def build_model(hp):
+    model = keras.Sequential()
+    model.add(Flatten())
+    # Tune the number of layers.
+    for i in range(hp.Int("num_layers", 1, 3)):
+        model.add(
+            Dense(
+                # Tune number of units separately.
+                units=hp.Int(f"units_{i}", min_value=4, max_value=10, step=1),
+                activation=hp.Choice("activation", ["relu", "tanh"]),
+            )
+        )
+    if hp.Boolean("dropout"):
+        model.add(Dropout(rate=0.25))
+    model.add(Dense(1, activation="sigmoid"))
+    learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log")
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
+        loss="binary_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+tuner = kt.RandomSearch(
+    hypermodel=build_model,
+    objective="val_accuracy",
+    max_trials=3,
+    executions_per_trial=2,
+    overwrite=True,
+    directory="my_dir",
+    project_name="helloworld",
+)
+
+
 # Helpers
 
 def count_bit(val, bit):
