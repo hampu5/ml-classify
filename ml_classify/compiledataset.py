@@ -46,18 +46,23 @@ tuner = kt.RandomSearch(
 
 # Helpers
 
-def count_bit(val, bit):
+def count_bit(val, bit: str):
     if isinstance(val, str):
         return val.count(bit)
     return bin(val).count(bit)
 
-def count_bit_bins(val, split_bit):
+def count_bit_bins(val, bit: str):
+    bit = "1" if bit == "0" else "0"
     if isinstance(val, str):
-        return len(list(filter(None, re.split(f"{split_bit}+", val))))
-    return len(list(filter(None, re.split(f"{split_bit}+", bin(val)))))
+        return len(list(filter(None, re.split(f"{bit}+", val))))
+    return len(list(filter(None, re.split(f"{bit}+", bin(val)))))
 
 def format_binary(val):
     return f"{val:08b}"
+
+def no_nan_or_inf(s: pd.Series):
+    s.replace([np.inf, -np.inf], np.nan, inplace=True)
+    return not s.isnull().values.any(axis=None)
 
 
 # Loading different datasets
@@ -161,6 +166,35 @@ def get_binary_payload(df: pd.DataFrame):
     
     assert not df["bin_data"].isnull().values.any(axis=None)
 
+def count_runs(df: pd.DataFrame):
+    get_binary_payload(df)
+
+    df["one_runs"] = df["bin_data"].apply(count_bit_bins, args="1")
+    df["zero_runs"] = df["bin_data"].apply(count_bit_bins, args="0")
+    df.drop(columns="bin_data", inplace=True)
+
+    assert no_nan_or_inf(df["one_runs"])
+    assert no_nan_or_inf(df["zero_runs"])
+
+def count_runs_diff(df: pd.DataFrame):
+    get_binary_payload(df)
+
+    one_runs = df["bin_data"].apply(count_bit_bins, args="1")
+    zero_runs = df["bin_data"].apply(count_bit_bins, args="0")
+    df.drop(columns="bin_data", inplace=True)
+
+    df["run_diff"] = one_runs / (zero_runs + 1) # +1 to not divide by 0
+
+    assert no_nan_or_inf(df["run_diff"])
+
+    one_runs = df["ID"].apply(count_bit_bins, args="1")
+    zero_runs = df["ID"].apply(count_bit_bins, args="0")
+
+    df["run_diff_ID"] = one_runs / (zero_runs + 1)
+
+    assert no_nan_or_inf(df["run_diff_ID"])
+
+
 def count_ones_weighted(df: pd.DataFrame):
     get_binary_payload(df)
     
@@ -208,6 +242,8 @@ def new_feature(df: pd.DataFrame):
     # count_ones_weighted2(df)
     # count_ones_weighted(df)
     count_ones(df)
+    # count_runs(df)
+    count_runs_diff(df)
     # df = merge_data_features(df)
 
     # assert not df.isnull().values.any(axis=None)
@@ -265,35 +301,3 @@ def compile_dataset(datasets: dict):
     # assert not df_all.isnull().values.any(axis=None)
 
     return df_all
-
-
-def compile_dataset_separate(datasets: dict):
-    df_attack = pd.DataFrame()
-    df_ambient = pd.DataFrame()
-
-    for dname, dataset in datasets.items():
-        for dataitem in dataset:
-            # name = dataitem["name"]
-            atype = dataitem["type"]
-            filename = dataitem["filename"]
-            has_attack = bool(dataitem["has_attack"])
-            # remarks = dataitem["remarks"] or ""
-            df = read_file(filename)
-            # df["name"] = name
-            df["dataset"] = dname
-            df["type"] = "none"
-            df.loc[df["Label"] == 1, "type"] = atype
-            # print(df["type"])
-            if has_attack:
-                df_attack = pd.concat([df_attack, df], ignore_index=True)
-            else:
-                df_ambient = pd.concat([df_ambient, df], ignore_index=True)
-    
-    df_attack = feature_creation(df_attack)
-    df_ambient = feature_creation(df_ambient)
-    df_attack = df_attack[[c for c in df_attack if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
-    df_ambient = df_ambient[[c for c in df_ambient if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
-
-    # assert not df_all.isnull().values.any(axis=None)
-
-    return df_attack, df_ambient
