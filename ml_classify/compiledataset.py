@@ -272,6 +272,60 @@ def feature_creation(df: pd.DataFrame):
 
 
 
+def get_labels_by_class(class_, window_size): 
+    # return [c for c in df.columns if c.startswith(class_ + "_")]    
+    return [ f"{class_}_{i}" for i in range(window_size) ]
+
+#Features related to frequency using window
+def extract_window(df: pd.DataFrame, window_size):
+
+    cs = df.columns
+    dfw = pd.DataFrame()
+    id_column_names = [] #added
+    for i in range(window_size):
+        tmp = df.shift(-i)
+        column_names = {c: f"{c}_{i}" for c in cs}
+        id_column_names.append(column_names['ID']) #added
+        tmp = tmp.rename(columns = column_names)
+        if dfw.shape[0] == 0:
+            dfw = tmp
+        else:
+            dfw = dfw.join(tmp)
+    
+    print('ID NAMES: %s' % id_column_names) #added
+
+    
+    ## Calculate 
+    from collections import Counter #added
+    dfw["win_most_freq_id"] = dfw.apply(lambda x: list([x[name] for name in id_column_names]), axis=1) #added
+    dfw["win_most_freq_id"]= dfw["win_most_freq_id"].apply(lambda x: max(Counter(x).values())) #added
+
+
+    # drop the last ones
+    len_ = dfw.shape[0]
+    dfw.drop( range(len_ - window_size, len_), inplace = True)
+
+    # compute the labels and remove the individual labels    
+    lbs = get_labels_by_class("Label", window_size)    
+    dfw["Label"] = dfw[lbs].max( axis = 1)
+    dfw.drop(lbs, axis = 1, inplace = True)
+    
+    # compute win_dir and win_mean_dt:
+    dts = get_labels_by_class("dt", window_size)    
+    dfw["win_dur"] = dfw[dts].sum( axis = 1)
+    dfw["win_mean_dt"] = dfw[dts].mean( axis = 1)
+    
+    # drop the absolut times, they are useless now
+    ts = get_labels_by_class("t", window_size)    
+    dfw.drop(ts, axis = 1, inplace = True)
+    
+    
+    Y = dfw["Label"]
+    X = dfw.drop("Label", axis = 1)
+    return X, Y
+
+
+
 def compile_dataset(datasets: dict):
     df_attack = pd.DataFrame()
     df_ambient = pd.DataFrame()
@@ -295,7 +349,7 @@ def compile_dataset(datasets: dict):
                 df_ambient = pd.concat([df_ambient, df], ignore_index=True)
     
     df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
-    df_all = feature_creation(df_all)
+    # df_all = feature_creation(df_all)
     df_all = df_all[[c for c in df_all if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
 
     # assert not df_all.isnull().values.any(axis=None)
