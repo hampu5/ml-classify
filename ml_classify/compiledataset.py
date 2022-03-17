@@ -332,13 +332,13 @@ def compile_dataset(datasets: dict):
 
     for dname, dataset in datasets.items():
         for dataitem in dataset:
-            # name = dataitem["name"]
+            name = dataitem["name"]
             atype = dataitem["type"]
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
             # remarks = dataitem["remarks"] or ""
             df = read_file(filename)
-            # df["name"] = name
+            df["name"] = name
             df["dataset"] = dname
             df["type"] = "none"
             df.loc[df["Label"] == 1, "type"] = atype
