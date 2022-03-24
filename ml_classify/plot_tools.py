@@ -44,7 +44,7 @@ def plot_correlation_matrix(df: pd.DataFrame):
     
     annots = remove_nocorr(corr)
 
-    plt.figure(dpi=200)
+    plt.figure(dpi=100)
     sns.heatmap(corr, mask=mask, vmin=-1, vmax=1, center=0, annot=annots, annot_kws={"fontsize": 5}, fmt="s", square=True)
     plt.title("ROAD Dataset Correlation Matrix (Pearson)")
     plt.show()

@@ -67,6 +67,30 @@ def no_nan_or_inf(s: pd.Series):
 def drop_bytes(df: pd.DataFrame):
     df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True, errors="ignore")
 
+def binary_payload(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    drop_bytes(df)
+
+    df_data = df_data.applymap(format_binary)
+    
+    df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    
+    df_data = None
+    
+    assert not df["data"].isnull().values.any(axis=None)
+
+def hex_payload(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    drop_bytes(df)
+
+    df_data = df_data.applymap(format_hex)
+    
+    df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    
+    df_data = None
+    
+    assert not df["data"].isnull().values.any(axis=None)
+
 # Various functions to get the data into the format we want
 
 # Helper function to translate absolute time to relative time
@@ -95,7 +119,7 @@ def create_dt_ID(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_ID"])
 
-def create_dt_ID_data(df: pd.DataFrame):
+def create_dt_ID_data_bytewise(df: pd.DataFrame):
     for i in range(8):
         df[f"dt_ID_d{i}"] = df.groupby(by=["ID", f"d{i}"])["t"].diff()
 
@@ -113,80 +137,41 @@ def create_dt_ID_data(df: pd.DataFrame):
 
         assert no_nan_or_inf(df[f"dt_ID_d{i}"])
 
+def create_dt_ID_data(df: pd.DataFrame):
+    df["dt_ID_data"] = df.groupby(by=["ID", "data"])["t"].diff()
+
+    nans_idx = df["dt_ID_data"].index[df["dt_ID_data"].apply(np.isnan)]
+    # print(nans_idx)
+    nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
+
+    meanall = df["dt_ID_data"].mean() # needed when an ID is used only once, hence no mean
+    means_ = df.groupby(by="ID")["dt_ID_data"].mean().fillna(meanall).to_dict() # mean for each ID
+    nans_vals = [means_[id_] for id_ in nans_ids]
+    
+    tmp = df["dt_ID_data"].copy()
+    tmp.iloc[nans_idx] = nans_vals
+    df["dt_ID_data"] = tmp
+
+    assert no_nan_or_inf(df["dt_ID_data"])
+
+def create_data_changed(df: pd.DataFrame):
+    df["data_changed"] = df.groupby("ID")["data"].rolling(2).apply(lambda x: int(x.is_unique))
+
+
+
 
 def read_file(filename):
     df = pd.read_csv(filename)
     
     df.rename(columns={'Timestamp':'t'}, inplace=True, errors="ignore")
     
+    binary_payload(df)
+
     create_dt(df)
     create_dt_ID(df)
     create_dt_ID_data(df)
+    create_data_changed(df)
     
-    return df
-
-
-def get_binary_payload(df: pd.DataFrame):
-    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
-    drop_bytes(df)
-
-    df_data = df_data.applymap(format_binary)
-    
-    df["bin_data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
-    
-    df_data = None
-    
-    assert not df["bin_data"].isnull().values.any(axis=None)
-
-def get_hex_payload(df: pd.DataFrame):
-    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
-    drop_bytes(df)
-
-    df_data = df_data.applymap(format_hex)
-    
-    df["hex_data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
-    
-    df_data = None
-    
-    assert not df["hex_data"].isnull().values.any(axis=None)
-
-
-def new_feature(df: pd.DataFrame):
-    # count_ones_weighted2(df)
-    # count_ones_weighted(df)
-    # count_ones(df)
-    # count_runs(df)
-    # count_runs_diff(df)
-    # df = merge_data_features(df)
-    # get_binary_payload(df)
-    # get_hex_payload(df)
-
-
-    
-    # drop_bytes(df)
-
-    # assert not df.isnull().values.any(axis=None)
-    
-    return df
-
-def feature_creation(df: pd.DataFrame):
-    # size = len(df.index)
-    # number_of_splits = ceil(size / 5000000)
-    # splits = np.array_split(df, number_of_splits)
-    # df = pd.DataFrame
-
-    # for split in splits:
-    #     if df.empty:
-    #         df = new_feature(split)
-    #     else:
-    #         df = pd.concat([df, new_feature(split)], ignore_index=True)
-    #     split = None
-    #     print(df)
-    df = new_feature(df)
-    # drop_bytes(df)
-
-    # assert not df.isnull().values.any(axis=None)
-
     return df
 
 
