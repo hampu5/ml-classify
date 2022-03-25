@@ -154,8 +154,31 @@ def create_dt_ID_data(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_ID_data"])
 
+from IPython.display import display
 def create_data_changed(df: pd.DataFrame):
-    df["data_changed"] = df.groupby("ID")["data"].rolling(2).apply(lambda x: int(x.is_unique))
+    grouped = df.groupby("ID")
+
+    for name, group in grouped:
+        group.rolling(2).data.apply(lambda x: int(x.is_unique))
+
+    display(grouped.obj)
+    df.fillna(1, inplace=True)
+
+    # def check_unique(x):
+    #     return x.is_unique
+    # grouped = df.groupby("ID")["data"]
+    # data_changed = pd.DataFrame
+    # for name, group in grouped:
+    #     # print(group)
+    #     group = group.rolling(2).apply(check_unique)
+    #     group.iloc[0] = 1
+    #     group = group.astype(int)
+    # display(grouped)
+    # df["data_changed"] = data_changed
+    # temp = df.groupby("ID")["data"].rolling(2).apply(check_unique)
+    # display(temp)
+    # display(df)
+    
 
 
 
