@@ -177,7 +177,7 @@ def create_dc(df: pd.DataFrame):
 
 # Similarity coefficient between two string
 def smc(s1: str, s2: str):
-    return sum(1 for x, y in zip(s1, s2) if x == y) / len(s1)
+    return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
 
 def change_score(s):
     shifted = s.shift(1)
@@ -185,14 +185,21 @@ def change_score(s):
 
 from sklearn.metrics import pairwise_distances
 def create_dcs(df: pd.DataFrame):
-    dcs = df.groupby("ID")["data"].apply(change_score)
-    # dcs.fillna(dcs.mean(), inplace=True)
-    display(dcs)
-    df["dcs"] = dcs
+    df["dcs"] = 0
+    grouped = df.groupby("ID")
+    for name, group in grouped:
+        if len(group) < 2:
+            idx = group.index[i]
+            df["dcs"].iloc[idx] = np.nan
+            continue
+        for i, row in enumerate(group, 1):
+            idx = group.index[i-1]
+            print(idx)
+            df["dcs"].iloc[idx] = smc(group.iloc[i]["data"], group.iloc[i-1]["data"])
 
-    assert no_nan_or_inf(df["dcs"])
+    # assert no_nan_or_inf(df["dcs"])
 
-
+# print(int("str1",2) and int("str2",2))
 
 def read_file(filename):
     df = pd.read_csv(filename)
@@ -204,8 +211,8 @@ def read_file(filename):
     create_dt(df)
     create_dt_ID(df)
     create_dt_ID_data(df)
-    create_dc(df)
-    # create_dcs(df)
+    # create_dc(df)
+    create_dcs(df)
     
     return df
 
