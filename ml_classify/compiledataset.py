@@ -1,4 +1,5 @@
 from math import ceil
+import string
 import numpy as np
 import pandas as pd
 import re
@@ -155,31 +156,41 @@ def create_dt_ID_data(df: pd.DataFrame):
     assert no_nan_or_inf(df["dt_ID_data"])
 
 from IPython.display import display
-def create_data_changed(df: pd.DataFrame):
-    grouped = df.groupby("ID")
 
-    for name, group in grouped:
-        group.rolling(2).data.apply(lambda x: int(x.is_unique))
+# def check_unique(x):
+#     shifted = x.shift(1)
+#     return (x != shifted).mask(shifted.isna())
 
-    display(grouped.obj)
-    df.fillna(1, inplace=True)
+def create_dc(df: pd.DataFrame):
+    # dc = df.groupby("ID")["data"].apply(check_unique).fillna(True).astype(int)
+    # display(dc)
+    # df["dc"] = dc
+    df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
 
-    # def check_unique(x):
-    #     return x.is_unique
-    # grouped = df.groupby("ID")["data"]
-    # data_changed = pd.DataFrame
-    # for name, group in grouped:
-    #     # print(group)
-    #     group = group.rolling(2).apply(check_unique)
-    #     group.iloc[0] = 1
-    #     group = group.astype(int)
-    # display(grouped)
-    # df["data_changed"] = data_changed
-    # temp = df.groupby("ID")["data"].rolling(2).apply(check_unique)
-    # display(temp)
-    # display(df)
+    assert no_nan_or_inf(df["dc"])
+
+# grouped = pd.DataFrame([[0, 1], [0, 1], [1, 0]], columns=["A", "B"]).groupby("A")
+# for name, group in grouped:
+#     shifted = group.shift(1)
     
+# display(result)
 
+# Similarity coefficient between two string
+def smc(s1: str, s2: str):
+    return sum(1 for x, y in zip(s1, s2) if x == y) / len(s1)
+
+def change_score(s):
+    shifted = s.shift(1)
+    return smc(s, shifted)
+
+from sklearn.metrics import pairwise_distances
+def create_dcs(df: pd.DataFrame):
+    dcs = df.groupby("ID")["data"].apply(change_score)
+    # dcs.fillna(dcs.mean(), inplace=True)
+    display(dcs)
+    df["dcs"] = dcs
+
+    assert no_nan_or_inf(df["dcs"])
 
 
 
@@ -193,7 +204,8 @@ def read_file(filename):
     create_dt(df)
     create_dt_ID(df)
     create_dt_ID_data(df)
-    create_data_changed(df)
+    create_dc(df)
+    # create_dcs(df)
     
     return df
 
