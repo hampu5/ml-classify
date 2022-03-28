@@ -169,6 +169,27 @@ def create_dc(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dc"])
 
+
+def check_unique(x):
+    shifted = x.shift(1)
+    temp = []
+    for s1, s2 in zip(x, shifted):
+        print(s1)
+        print(s2)
+        if s1 == np.nan or s2 == np.nan:
+            temp.append(np.nan)
+            continue
+        temp.append(sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64)
+    return pd.Series(temp)
+
+def create_dcs(df: pd.DataFrame):
+    dcs = df.groupby("ID")["data"].apply(check_unique)
+    display(dcs)
+    df["dcs"] = dcs
+    # df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
+
+    assert no_nan_or_inf(df["dcs"])
+
 # grouped = pd.DataFrame([[0, 1], [0, 1], [1, 0]], columns=["A", "B"]).groupby("A")
 # for name, group in grouped:
 #     shifted = group.shift(1)
@@ -176,26 +197,26 @@ def create_dc(df: pd.DataFrame):
 # display(result)
 
 # Similarity coefficient between two string
-def smc(s1: str, s2: str):
-    return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
+# def smc(s1: str, s2: str):
+#     return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
 
-def change_score(s):
-    shifted = s.shift(1)
-    return smc(s, shifted)
+# def change_score(s):
+#     shifted = s.shift(1)
+#     return smc(s, shifted)
 
-from sklearn.metrics import pairwise_distances
-def create_dcs(df: pd.DataFrame):
-    df["dcs"] = 0
-    grouped = df.groupby("ID")
-    for name, group in grouped:
-        if len(group) < 2:
-            idx = group.index[i]
-            df["dcs"].iloc[idx] = np.nan
-            continue
-        for i, row in enumerate(group, 1):
-            idx = group.index[i-1]
-            print(idx)
-            df["dcs"].iloc[idx] = smc(group.iloc[i]["data"], group.iloc[i-1]["data"])
+# from sklearn.metrics import pairwise_distances
+# def create_dcs(df: pd.DataFrame):
+#     df["dcs"] = 0
+#     grouped = df.groupby("ID")
+#     for name, group in grouped:
+#         if len(group) < 2:
+#             idx = group.index[i]
+#             df["dcs"].iloc[idx] = np.nan
+#             continue
+#         for i, row in enumerate(group, 1):
+#             idx = group.index[i-1]
+#             print(idx)
+#             df["dcs"].iloc[idx] = smc(group.iloc[i]["data"], group.iloc[i-1]["data"])
 
     # assert no_nan_or_inf(df["dcs"])
 
