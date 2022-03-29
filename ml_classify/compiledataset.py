@@ -155,72 +155,32 @@ def create_dt_ID_data(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_ID_data"])
 
-from IPython.display import display
-
-# def check_unique(x):
-#     shifted = x.shift(1)
-#     return (x != shifted).mask(shifted.isna())
 
 def create_dc(df: pd.DataFrame):
-    # dc = df.groupby("ID")["data"].apply(check_unique).fillna(True).astype(int)
-    # display(dc)
-    # df["dc"] = dc
     df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
 
     assert no_nan_or_inf(df["dc"])
 
 
+def smc(s1, s2): # Simple Matching Coefficient
+    return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
+
 def check_unique(x):
     shifted = x.shift(1)
-    temp = []
-    for s1, s2 in zip(x, shifted):
-        print(s1)
-        print(s2)
-        if s1 == np.nan or s2 == np.nan:
-            temp.append(np.nan)
+    temp = {}
+    for (idx1, s1), (idx2, s2) in zip(x.items(), shifted.items()):
+        if not (isinstance(s1, str) and isinstance(s2, str)):
+            temp[idx2] = np.nan
             continue
-        temp.append(sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64)
+        temp[idx2] = 1 - smc(s1, s2)
     return pd.Series(temp)
 
 def create_dcs(df: pd.DataFrame):
     dcs = df.groupby("ID")["data"].apply(check_unique)
-    display(dcs)
-    df["dcs"] = dcs
-    # df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
+    df["dcs"] = dcs.fillna(dcs.mean())
 
     assert no_nan_or_inf(df["dcs"])
 
-# grouped = pd.DataFrame([[0, 1], [0, 1], [1, 0]], columns=["A", "B"]).groupby("A")
-# for name, group in grouped:
-#     shifted = group.shift(1)
-    
-# display(result)
-
-# Similarity coefficient between two string
-# def smc(s1: str, s2: str):
-#     return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
-
-# def change_score(s):
-#     shifted = s.shift(1)
-#     return smc(s, shifted)
-
-# from sklearn.metrics import pairwise_distances
-# def create_dcs(df: pd.DataFrame):
-#     df["dcs"] = 0
-#     grouped = df.groupby("ID")
-#     for name, group in grouped:
-#         if len(group) < 2:
-#             idx = group.index[i]
-#             df["dcs"].iloc[idx] = np.nan
-#             continue
-#         for i, row in enumerate(group, 1):
-#             idx = group.index[i-1]
-#             print(idx)
-#             df["dcs"].iloc[idx] = smc(group.iloc[i]["data"], group.iloc[i-1]["data"])
-
-    # assert no_nan_or_inf(df["dcs"])
-
-# print(int("str1",2) and int("str2",2))
 
 def read_file(filename):
     df = pd.read_csv(filename)
