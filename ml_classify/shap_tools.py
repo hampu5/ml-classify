@@ -17,3 +17,7 @@ def plot_beeswarm(exp_obj):
     plt.gcf().axes[-1].set_aspect(100)
     plt.gcf().axes[-1].set_box_aspect(100)
     return vis
+
+def plot_waterfall(exp_obj):
+    vis = shap.plots.waterfall(exp_obj[0])
+    return vis
