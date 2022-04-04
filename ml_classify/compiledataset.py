@@ -70,7 +70,7 @@ def drop_bytes(df: pd.DataFrame):
 
 def binary_payload(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
-    drop_bytes(df)
+    # drop_bytes(df)
 
     df_data = df_data.applymap(format_binary)
     
@@ -80,9 +80,27 @@ def binary_payload(df: pd.DataFrame):
     
     assert not df["data"].isnull().values.any(axis=None)
 
+def dec_payload(df: pd.DataFrame):
+    df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
+    # drop_bytes(df)
+    
+    df["data_dec"] = \
+        df_data["d0"] * (256**7) + \
+        df_data["d1"] * (256**6) + \
+        df_data["d2"] * (256**5) + \
+        df_data["d3"] * (256**4) + \
+        df_data["d4"] * (256**3) + \
+        df_data["d5"] * (256**2) + \
+        df_data["d6"] * 256 + \
+        df_data["d7"]
+    
+    df_data = None
+    
+    assert not df["data_dec"].isnull().values.any(axis=None)
+
 def hex_payload(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
-    drop_bytes(df)
+    # drop_bytes(df)
 
     df_data = df_data.applymap(format_hex)
     
@@ -107,6 +125,7 @@ def create_dt_ID(df: pd.DataFrame):
     df["dt_ID"] = df.groupby(by="ID")["t"].diff()
 
     nans_idx = df["dt_ID"].index[df["dt_ID"].apply(np.isnan)]
+    print(f"number of nans in dt_ID: {len(nans_idx)}")
     # print(nans_idx)
     nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
 
@@ -119,6 +138,43 @@ def create_dt_ID(df: pd.DataFrame):
     df["dt_ID"] = tmp
 
     assert no_nan_or_inf(df["dt_ID"])
+
+def create_dt_data(df: pd.DataFrame):
+    df["dt_data"] = df.groupby(by="data_dec")["t"].diff()
+
+    df["dt_data"].fillna(df["dt_data"].mean(), inplace=True)
+
+    # nans_idx = df["dt_data"].index[df["dt_data"].apply(np.isnan)]
+    # print(f"number of nans in dt_data: {len(nans_idx)}")
+    # # print(nans_idx)
+    # nans_data = [int(df.iloc[d]["data_dec"]) for d in nans_idx]
+
+    # meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
+    # means_ = df.groupby(by="data_dec")["dt_data"].mean().fillna(meanall).to_dict() # mean for each Data
+    # nans_vals = [means_[id_] for id_ in nans_data]
+    
+    # tmp = df["dt_data"].copy()
+    # tmp.iloc[nans_idx] = nans_vals
+    # df["dt_data"] = tmp
+
+    assert no_nan_or_inf(df["dt_data"])
+
+def create_dt_ID_data(df: pd.DataFrame):
+    df["dt_ID_data"] = df.groupby(by=["ID", "data"])["t"].diff()
+
+    nans_idx = df["dt_ID_data"].index[df["dt_ID_data"].apply(np.isnan)]
+    # print(nans_idx)
+    nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
+
+    meanall = df["dt_ID_data"].mean() # needed when an ID is used only once, hence no mean
+    means_ = df.groupby(by="ID")["dt_ID_data"].mean().fillna(meanall).to_dict() # mean for each ID
+    nans_vals = [means_[id_] for id_ in nans_ids]
+    
+    tmp = df["dt_ID_data"].copy()
+    tmp.iloc[nans_idx] = nans_vals
+    df["dt_ID_data"] = tmp
+
+    assert no_nan_or_inf(df["dt_ID_data"])
 
 def create_dt_ID_data_bytewise(df: pd.DataFrame):
     for i in range(8):
@@ -137,23 +193,6 @@ def create_dt_ID_data_bytewise(df: pd.DataFrame):
         df[f"dt_ID_d{i}"] = tmp
 
         assert no_nan_or_inf(df[f"dt_ID_d{i}"])
-
-def create_dt_ID_data(df: pd.DataFrame):
-    df["dt_ID_data"] = df.groupby(by=["ID", "data"])["t"].diff()
-
-    nans_idx = df["dt_ID_data"].index[df["dt_ID_data"].apply(np.isnan)]
-    # print(nans_idx)
-    nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
-
-    meanall = df["dt_ID_data"].mean() # needed when an ID is used only once, hence no mean
-    means_ = df.groupby(by="ID")["dt_ID_data"].mean().fillna(meanall).to_dict() # mean for each ID
-    nans_vals = [means_[id_] for id_ in nans_ids]
-    
-    tmp = df["dt_ID_data"].copy()
-    tmp.iloc[nans_idx] = nans_vals
-    df["dt_ID_data"] = tmp
-
-    assert no_nan_or_inf(df["dt_ID_data"])
 
 
 def create_dc(df: pd.DataFrame):
@@ -188,10 +227,13 @@ def read_file(filename):
     df.rename(columns={'Timestamp':'t'}, inplace=True, errors="ignore")
     
     binary_payload(df)
+    dec_payload(df)
+    drop_bytes(df)
 
     create_dt(df)
     create_dt_ID(df)
-    create_dt_ID_data(df)
+    create_dt_data(df)
+    # create_dt_ID_data(df)
     # create_dc(df)
     create_dcs(df)
     
