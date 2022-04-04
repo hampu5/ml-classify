@@ -75,7 +75,7 @@ def binary_payload(df: pd.DataFrame):
     df_data = df_data.applymap(format_binary)
     
     df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
-    
+
     df_data = None
     
     assert not df["data"].isnull().values.any(axis=None)
@@ -104,13 +104,56 @@ def hex_payload(df: pd.DataFrame):
 
     df_data = df_data.applymap(format_hex)
     
-    df["data"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
+    df["data_hex"] = df_data["d0"] + df_data["d1"] + df_data["d2"] + df_data["d3"] + df_data["d4"] + df_data["d5"] + df_data["d6"] + df_data["d7"]
     
     df_data = None
     
-    assert not df["data"].isnull().values.any(axis=None)
+    assert not df["data_hex"].isnull().values.any(axis=None)
 
-# Various functions to get the data into the format we want
+# Various functions to create new features
+
+def create_dc(df: pd.DataFrame):
+    df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
+
+    assert no_nan_or_inf(df["dc"])
+
+def smc(s1, s2): # Simple Matching Coefficient
+    return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
+
+def fuzzify(s):
+    s_temp = [0] * len(s) # Always 64 in this study
+    for i, b1 in enumerate(s):
+        if b1 == "1":
+            if i - 2 >= 0: s_temp[i-2] += 1
+            if i - 1 >= 0: s_temp[i-1] += 2
+            s_temp[i] += 4
+            if i + 1 < len(s): s_temp[i+1] += 2
+            if i + 2 < len(s): s_temp[i+2] += 1
+    return s_temp
+
+# 00110000111 11
+# 13663113791097
+
+def fmc(s1, s2): # "Fuzzy" Matching Coefficient
+    s1_fuzz = fuzzify(s1)
+    s2_fuzz = fuzzify(s2)
+    return sum([(10 - abs(c1-c2)) for c1, c2 in zip(s1_fuzz, s2_fuzz)]) / (64*10)
+
+def check_unique(x):
+    shifted = x.shift(1)
+    temp = {}
+    for (idx1, s1), (idx2, s2) in zip(x.items(), shifted.items()):
+        if not (isinstance(s1, str) and isinstance(s2, str)):
+            temp[idx2] = np.nan
+            continue
+        temp[idx2] = 1 - smc(s1, s2) # fmc might have a bit better accuracy
+    return pd.Series(temp)
+
+def create_dcs(df: pd.DataFrame):
+    dcs = df.groupby("ID")["data"].apply(check_unique)
+    df["dcs"] = dcs.fillna(dcs.mean())
+
+    assert no_nan_or_inf(df["dcs"])
 
 # Helper function to translate absolute time to relative time
 def create_dt(df: pd.DataFrame):
@@ -125,7 +168,7 @@ def create_dt_ID(df: pd.DataFrame):
     df["dt_ID"] = df.groupby(by="ID")["t"].diff()
 
     nans_idx = df["dt_ID"].index[df["dt_ID"].apply(np.isnan)]
-    print(f"number of nans in dt_ID: {len(nans_idx)}")
+    # print(f"number of nans in dt_ID: {len(nans_idx)}")
     # print(nans_idx)
     nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
 
@@ -158,6 +201,37 @@ def create_dt_data(df: pd.DataFrame):
     # df["dt_data"] = tmp
 
     assert no_nan_or_inf(df["dt_data"])
+
+from IPython.display import display
+def count_ones(df: pd.DataFrame):
+    # display(df["data"])
+    df["ones"] = df["data"].apply(lambda x: x.count("1"))
+
+    assert not df["ones"].isnull().values.any(axis=None)
+
+def create_dt_ones(df: pd.DataFrame):
+    count_ones(df)
+
+    df["dt_ones"] = df.groupby(by="ones")["t"].diff()
+
+    df["dt_ones"].fillna(df["dt_ones"].mean(), inplace=True)
+
+    df.drop(columns="ones", inplace=True)
+
+    # nans_idx = df["dt_data"].index[df["dt_data"].apply(np.isnan)]
+    # print(f"number of nans in dt_data: {len(nans_idx)}")
+    # # print(nans_idx)
+    # nans_data = [int(df.iloc[d]["data_dec"]) for d in nans_idx]
+
+    # meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
+    # means_ = df.groupby(by="data_dec")["dt_data"].mean().fillna(meanall).to_dict() # mean for each Data
+    # nans_vals = [means_[id_] for id_ in nans_data]
+    
+    # tmp = df["dt_data"].copy()
+    # tmp.iloc[nans_idx] = nans_vals
+    # df["dt_data"] = tmp
+
+    assert no_nan_or_inf(df["dt_ones"])
 
 def create_dt_ID_data(df: pd.DataFrame):
     df["dt_ID_data"] = df.groupby(by=["ID", "data"])["t"].diff()
@@ -195,30 +269,7 @@ def create_dt_ID_data_bytewise(df: pd.DataFrame):
         assert no_nan_or_inf(df[f"dt_ID_d{i}"])
 
 
-def create_dc(df: pd.DataFrame):
-    df["dc"] = df.groupby("ID")["data"].shift().ne(df['data']).astype(int)
 
-    assert no_nan_or_inf(df["dc"])
-
-
-def smc(s1, s2): # Simple Matching Coefficient
-    return sum([1 for c1, c2 in zip(s1, s2) if c1 == c2]) / 64
-
-def check_unique(x):
-    shifted = x.shift(1)
-    temp = {}
-    for (idx1, s1), (idx2, s2) in zip(x.items(), shifted.items()):
-        if not (isinstance(s1, str) and isinstance(s2, str)):
-            temp[idx2] = np.nan
-            continue
-        temp[idx2] = 1 - smc(s1, s2)
-    return pd.Series(temp)
-
-def create_dcs(df: pd.DataFrame):
-    dcs = df.groupby("ID")["data"].apply(check_unique)
-    df["dcs"] = dcs.fillna(dcs.mean())
-
-    assert no_nan_or_inf(df["dcs"])
 
 
 def read_file(filename):
@@ -230,12 +281,14 @@ def read_file(filename):
     dec_payload(df)
     drop_bytes(df)
 
+    create_dcs(df)
+
     create_dt(df)
     create_dt_ID(df)
     create_dt_data(df)
+    create_dt_ones(df)
     # create_dt_ID_data(df)
     # create_dc(df)
-    create_dcs(df)
     
     return df
 
