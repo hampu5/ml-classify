@@ -13,7 +13,7 @@ def get_explanation(explainer, df: pd.DataFrame):
     return shap_value
 
 def plot_beeswarm(exp_obj):
-    vis = shap.plots.beeswarm(exp_obj, show=False)
+    vis = shap.plots.beeswarm(exp_obj, show=False, color=plt.get_cmap("plasma"))
     plt.gcf().axes[-1].set_aspect(100)
     plt.gcf().axes[-1].set_box_aspect(100)
     return vis

@@ -233,6 +233,18 @@ def create_dt_ones(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_ones"])
 
+def create_dt_runs(df: pd.DataFrame):
+    df["one_runs"] = df["data"].apply(lambda x: len(list(filter(None, re.split("0+", x)))))
+    # df["one_runs"] += df["data"].apply(lambda x: len(list(filter(None, re.split("1+", x)))))
+
+    df["dt_runs"] = df.groupby(by="one_runs")["t"].diff()
+
+    df["dt_runs"].fillna(df["dt_runs"].mean(), inplace=True)
+
+    df.drop(columns="one_runs", inplace=True)
+
+    assert no_nan_or_inf(df["dt_runs"])
+
 def create_dt_ID_data(df: pd.DataFrame):
     df["dt_ID_data"] = df.groupby(by=["ID", "data"])["t"].diff()
 
@@ -286,7 +298,8 @@ def read_file(filename):
     create_dt(df)
     create_dt_ID(df)
     create_dt_data(df)
-    create_dt_ones(df)
+    # create_dt_ones(df)
+    create_dt_runs(df)
     # create_dt_ID_data(df)
     # create_dc(df)
     
