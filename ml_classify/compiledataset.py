@@ -146,14 +146,21 @@ def check_unique(x):
         if not (isinstance(s1, str) and isinstance(s2, str)):
             temp[idx2] = np.nan
             continue
-        temp[idx2] = 1 - smc(s1, s2) # fmc might have a bit better accuracy
+        temp[idx2] = 1 - smc(s1, s2) # fmc might be more general
     return pd.Series(temp)
 
 def create_dcs(df: pd.DataFrame):
-    dcs = df.groupby("ID")["data"].apply(check_unique)
+    dcs = check_unique(df["data"])
     df["dcs"] = dcs.fillna(dcs.mean())
+    # df["dcs"].iloc[0] = df["dcs"].mean()
 
     assert no_nan_or_inf(df["dcs"])
+
+def create_dcs_ID(df: pd.DataFrame):
+    dcs_ID = df.groupby("ID")["data"].apply(check_unique)
+    df["dcs_ID"] = dcs_ID.fillna(dcs_ID.mean())
+
+    assert no_nan_or_inf(df["dcs_ID"])
 
 # Helper function to translate absolute time to relative time
 def create_dt(df: pd.DataFrame):
@@ -294,6 +301,7 @@ def read_file(filename):
     drop_bytes(df)
 
     create_dcs(df)
+    create_dcs_ID(df)
 
     create_dt(df)
     create_dt_ID(df)
