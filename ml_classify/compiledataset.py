@@ -308,8 +308,7 @@ def read_file(filename):
 
 
 def compile_dataset(datasets: dict):
-    df_attack = pd.DataFrame()
-    df_ambient = pd.DataFrame()
+    df_all = pd.DataFrame()
 
     for dname, dataset in datasets.items():
         for dataitem in dataset:
@@ -323,16 +322,12 @@ def compile_dataset(datasets: dict):
             df["name"] = name
             df["class"] = c
             df["dataset"] = dname
-            df["type"] = "none"
-            df.loc[df["Label"] == 1, "type"] = atype
+            df["type"] = atype
+            # df["type"] = "none"
+            # df.loc[df["Label"] == 1, "type"] = atype
             # print(df["type"])
-            if has_attack:
-                df_attack = pd.concat([df_attack, df], ignore_index=True)
-            else:
-                df_ambient = pd.concat([df_ambient, df], ignore_index=True)
+            df_all = pd.concat([df_all, df], ignore_index=True)
     
-    df_all = pd.concat([df_attack, df_ambient], ignore_index=True)
-    # df_all = feature_creation(df_all)
     df_all = df_all[[c for c in df_all if c not in ["dataset", "type", "Label"]] + ["dataset", "type", "Label"]]
 
     # assert not df_all.isnull().values.any(axis=None)
