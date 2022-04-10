@@ -48,3 +48,8 @@ def plot_correlation_matrix(df: pd.DataFrame):
     sns.heatmap(corr, mask=mask, vmin=-1, vmax=1, center=0, annot=annots, annot_kws={"fontsize": 5}, fmt="s", square=True)
     plt.title("ROAD Dataset Correlation Matrix (Pearson)")
     plt.show()
+
+ 
+def plot_pairplot(df: pd.DataFrame):
+   sns.pairplot(data=df.sample(500, random_state=0), hue="Label")
+   plt.show()
