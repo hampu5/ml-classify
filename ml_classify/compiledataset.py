@@ -152,13 +152,14 @@ def check_unique(x):
 def create_dcs(df: pd.DataFrame):
     dcs = check_unique(df["data"])
     df["dcs"] = dcs.fillna(dcs.mean())
-    # df["dcs"].iloc[0] = df["dcs"].mean()
 
     assert no_nan_or_inf(df["dcs"])
 
 def create_dcs_ID(df: pd.DataFrame):
-    dcs_ID = df.groupby("ID")["data"].apply(check_unique)
-    df["dcs_ID"] = dcs_ID.fillna(dcs_ID.mean())
+    df["dcs_ID"] = df.groupby("ID")["data"].apply(check_unique)
+    # df["dcs_ID"] = dcs_ID.fillna(dcs_ID.mean())
+    meanall = df["dcs_ID"].mean() # needed when a dcs is used only once, hence no mean
+    df["dcs_ID"] = df.groupby("ID")["dcs_ID"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
     assert no_nan_or_inf(df["dcs_ID"])
 
@@ -174,38 +175,16 @@ def create_dt(df: pd.DataFrame):
 def create_dt_ID(df: pd.DataFrame):
     df["dt_ID"] = df.groupby(by="ID")["t"].diff()
 
-    nans_idx = df["dt_ID"].index[df["dt_ID"].apply(np.isnan)]
-    # print(f"number of nans in dt_ID: {len(nans_idx)}")
-    # print(nans_idx)
-    nans_ids = [int(df.iloc[d]["ID"]) for d in nans_idx]
-
     meanall = df["dt_ID"].mean() # needed when an ID is used only once, hence no mean
-    means_ = df.groupby(by="ID")["dt_ID"].mean().fillna(meanall).to_dict() # mean for each ID
-    nans_vals = [means_[id_] for id_ in nans_ids]
-    
-    tmp = df["dt_ID"].copy()
-    tmp.iloc[nans_idx] = nans_vals
-    df["dt_ID"] = tmp
+    df["dt_ID"] = df.groupby("ID")["dt_ID"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
     assert no_nan_or_inf(df["dt_ID"])
 
 def create_dt_data(df: pd.DataFrame):
     df["dt_data"] = df.groupby(by="data_dec")["t"].diff()
 
-    df["dt_data"].fillna(df["dt_data"].mean(), inplace=True)
-
-    # nans_idx = df["dt_data"].index[df["dt_data"].apply(np.isnan)]
-    # print(f"number of nans in dt_data: {len(nans_idx)}")
-    # # print(nans_idx)
-    # nans_data = [int(df.iloc[d]["data_dec"]) for d in nans_idx]
-
-    # meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
-    # means_ = df.groupby(by="data_dec")["dt_data"].mean().fillna(meanall).to_dict() # mean for each Data
-    # nans_vals = [means_[id_] for id_ in nans_data]
-    
-    # tmp = df["dt_data"].copy()
-    # tmp.iloc[nans_idx] = nans_vals
-    # df["dt_data"] = tmp
+    meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
+    df["dt_data"] = df.groupby("data")["dt_data"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
     assert no_nan_or_inf(df["dt_data"])
 
@@ -225,19 +204,6 @@ def create_dt_ones(df: pd.DataFrame):
 
     df.drop(columns="ones", inplace=True)
 
-    # nans_idx = df["dt_data"].index[df["dt_data"].apply(np.isnan)]
-    # print(f"number of nans in dt_data: {len(nans_idx)}")
-    # # print(nans_idx)
-    # nans_data = [int(df.iloc[d]["data_dec"]) for d in nans_idx]
-
-    # meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
-    # means_ = df.groupby(by="data_dec")["dt_data"].mean().fillna(meanall).to_dict() # mean for each Data
-    # nans_vals = [means_[id_] for id_ in nans_data]
-    
-    # tmp = df["dt_data"].copy()
-    # tmp.iloc[nans_idx] = nans_vals
-    # df["dt_data"] = tmp
-
     assert no_nan_or_inf(df["dt_ones"])
 
 def create_dt_runs(df: pd.DataFrame):
@@ -246,7 +212,9 @@ def create_dt_runs(df: pd.DataFrame):
 
     df["dt_runs"] = df.groupby(by="one_runs")["t"].diff()
 
-    df["dt_runs"].fillna(df["dt_runs"].mean(), inplace=True)
+    # df["dt_runs"].fillna(df["dt_runs"].mean(), inplace=True)
+    meanall = df["dt_runs"].mean() # needed when a run is used only once, hence no mean
+    df["dt_runs"] = df.groupby("one_runs")["dt_runs"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
     df.drop(columns="one_runs", inplace=True)
 
