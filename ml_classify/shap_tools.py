@@ -21,3 +21,7 @@ def plot_beeswarm(exp_obj):
 def plot_waterfall(exp_obj):
     vis = shap.plots.waterfall(exp_obj[0])
     return vis
+
+def plot_force(exp_obj):
+    vis = shap.plots.force(exp_obj, plot_cmap="DrDb")
+    return vis
