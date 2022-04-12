@@ -95,7 +95,7 @@ def compile_dataset(datasets: dict):
             atype = dataitem["type"]
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
-            if name != "FreeDrivingData_20180323_SONATA":
+            if c != "FreeDrivingData_20180112_KIA":
                 continue
             # remarks = dataitem["remarks"] or ""
             df = read_file(filename)

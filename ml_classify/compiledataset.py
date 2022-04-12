@@ -188,6 +188,15 @@ def create_dt_data(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_data"])
 
+def create_dt_data_bytewise(df: pd.DataFrame):
+    for i in range(8):
+        df[f"dt_d{i}"] = df.groupby(by=f"d{i}")["t"].diff()
+
+        meanall = df[f"dt_d{i}"].mean() # needed when a Data is used only once, hence no mean
+        df[f"dt_d{i}"] = df.groupby(f"d{i}")[f"dt_d{i}"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
+
+        assert no_nan_or_inf(df[f"dt_d{i}"])
+
 from IPython.display import display
 def count_ones(df: pd.DataFrame):
     # display(df["data"])
@@ -266,7 +275,7 @@ def read_file(filename):
     
     binary_payload(df)
     dec_payload(df)
-    drop_bytes(df)
+    # drop_bytes(df)
 
     create_dcs(df)
     create_dcs_ID(df)
@@ -274,8 +283,9 @@ def read_file(filename):
     create_dt(df)
     create_dt_ID(df)
     create_dt_data(df)
+    create_dt_data_bytewise(df)
     # create_dt_ones(df)
-    create_dt_runs(df)
+    # create_dt_runs(df)
     # create_dt_ID_data(df)
     # create_dc(df)
     
@@ -293,7 +303,9 @@ def compile_dataset(datasets: dict):
             atype = dataitem["type"]
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
-            # remarks = dataitem["remarks"] or ""
+            
+            if c != "Sonata": continue
+
             df = read_file(filename)
             df["name"] = name
             df["class"] = c
