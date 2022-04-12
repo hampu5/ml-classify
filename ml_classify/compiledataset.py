@@ -304,6 +304,7 @@ def compile_dataset(datasets: dict):
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
             
+            if name != "Fuzzy_dataset_SONATA": continue
             if c != "Sonata": continue
 
             df = read_file(filename)
