@@ -25,3 +25,7 @@ def plot_waterfall(exp_obj):
 def plot_force(exp_obj):
     vis = shap.plots.force(exp_obj, plot_cmap="DrDb")
     return vis
+
+def plot_scatter(exp_obj, feature):
+    vis = shap.plots.scatter(exp_obj[:,feature], color=exp_obj)
+    return vis
