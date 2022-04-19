@@ -46,8 +46,10 @@ tuner = kt.RandomSearch(
 
 
 # Loading different datasets
-def load_dataset(path, filename) -> pd.DataFrame:
-    data = pd.read_csv(f"{path}/{filename}")
+def load_dataset(path, filename, name=None) -> pd.DataFrame:
+    data = pd.read_csv(f"{path}/{filename}")    
+    if name != None: data = data.loc[data["name"] == name]
+    assert len(data) > 0
     data["filename"] = data["filename"].apply(lambda filename: f"{path}/{filename}")
     data = data[["name", "class", "type", "filename", "has_attack"]]
     return data
@@ -304,7 +306,7 @@ def compile_dataset(datasets: dict):
             filename = dataitem["filename"]
             has_attack = bool(dataitem["has_attack"])
             
-            if name != "Vehicle_F-Model_2-Fabrication_attack-Sample_1": continue
+            # if name != "Vehicle_F-Model_2-Fabrication_attack-Sample_1": continue
             # if c != "Sonata": continue
 
             df = read_file(filename)

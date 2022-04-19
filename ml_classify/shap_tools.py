@@ -4,13 +4,19 @@ import matplotlib.pyplot as plt
 
 shap.initjs()
 
-def get_explanation(explainer, df: pd.DataFrame):
-    size = min(len(df), 600)
+def get_explanation(explainer, df: pd.DataFrame, size):
+    size = min(len(df), size)
     df = df.sample(size, random_state=0)
 
-    shap_value = explainer(df)
-    shap_value = shap.Explanation(shap_value[:, :, 1], feature_names=df.columns)
-    return shap_value
+    if isinstance(explainer, shap.TreeExplainer):
+        return shap.Explanation(explainer(df)[:, :, 1], feature_names=df.columns)
+    elif isinstance(explainer, shap.KernelExplainer):
+        return shap.Explanation(
+            values=explainer.shap_values(df)[0],
+            base_values=explainer.expected_value,
+            data=df.to_numpy(),
+            feature_names=df.columns)
+    return None
 
 def plot_beeswarm(exp_obj):
     vis = shap.plots.beeswarm(exp_obj, show=False, max_display=20 , color=plt.get_cmap("plasma"))
@@ -18,8 +24,8 @@ def plot_beeswarm(exp_obj):
     plt.gcf().axes[-1].set_box_aspect(100)
     return vis
 
-def plot_waterfall(exp_obj):
-    vis = shap.plots.waterfall(exp_obj[0])
+def plot_waterfall(exp_obj, index):
+    vis = shap.plots.waterfall(exp_obj[index])
     return vis
 
 def plot_force(exp_obj):
