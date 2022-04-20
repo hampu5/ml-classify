@@ -8,15 +8,20 @@ def get_explanation(explainer, df: pd.DataFrame, size):
     size = min(len(df), size)
     df = df.sample(size, random_state=0)
 
+    return_explanation = None
+
     if isinstance(explainer, shap.TreeExplainer):
-        return shap.Explanation(explainer(df)[:, :, 1], feature_names=df.columns)
+        return_explanation = shap.Explanation(explainer(df)[:, :, 1], feature_names=df.columns)
     elif isinstance(explainer, shap.KernelExplainer):
-        return shap.Explanation(
+        return_explanation = shap.Explanation(
             values=explainer.shap_values(df)[0],
             base_values=explainer.expected_value,
             data=df.to_numpy(),
             feature_names=df.columns)
-    return None
+    
+    assert return_explanation != None
+    
+    return return_explanation
 
 def plot_beeswarm(exp_obj):
     vis = shap.plots.beeswarm(exp_obj, show=False, max_display=20 , color=plt.get_cmap("plasma"))
