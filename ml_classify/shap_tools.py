@@ -38,5 +38,6 @@ def plot_force(exp_obj):
     return vis
 
 def plot_scatter(exp_obj, feature):
-    vis = shap.plots.scatter(exp_obj[:,feature], color=exp_obj)
+    vis = shap.plots.scatter(exp_obj[:,feature], color=exp_obj, show=False)
+    plt.show()
     return vis
