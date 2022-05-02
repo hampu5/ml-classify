@@ -182,8 +182,17 @@ def create_dt_ID(df: pd.DataFrame):
 
     assert no_nan_or_inf(df["dt_ID"])
 
+def create_dt_data_ID(df: pd.DataFrame):
+    df["dt_data"] = df.groupby("ID").apply(
+        lambda x: x.groupby("data", as_index=False)["t"].diff())
+    
+    meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
+    df["dt_data"] = df.groupby("data")["dt_data"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
+
+    assert no_nan_or_inf(df["dt_data"])
+
 def create_dt_data(df: pd.DataFrame):
-    df["dt_data"] = df.groupby(by="data_dec")["t"].diff()
+    df["dt_data"] = df.groupby(by="data")["t"].diff()
 
     meanall = df["dt_data"].mean() # needed when a Data is used only once, hence no mean
     df["dt_data"] = df.groupby("data")["dt_data"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))

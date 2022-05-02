@@ -37,6 +37,25 @@ def plot_force(exp_obj):
     vis = shap.plots.force(exp_obj, plot_cmap="DrDb")
     return vis
 
+def plot_dependence(exp_obj, feature, interaction="auto", xmin=None, xmax=None):
+    vis = shap.dependence_plot(feature, exp_obj.values,
+        pd.DataFrame(exp_obj.data, columns=exp_obj.feature_names),
+        interaction_index=interaction,
+        xmin=xmin, xmax=xmax,
+        alpha=1.0)
+    return vis
+
+def plot_heatmap(exp_obj, sort="mean"):
+    sorter = exp_obj.abs.mean(0)
+    if sort == "max": sorter = exp_obj.abs.max(0)
+    vis = shap.plots.heatmap(exp_obj,
+        max_display=20,
+        show=False,
+        feature_values=sorter)
+    plt.gcf().axes[-1].set_aspect(200)
+    plt.gcf().axes[-1].set_box_aspect(50)
+    return vis
+
 def plot_scatter(exp_obj, feature):
     vis = shap.plots.scatter(exp_obj[:,feature], color=exp_obj, show=False)
     plt.show()
