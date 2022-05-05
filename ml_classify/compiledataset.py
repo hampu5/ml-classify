@@ -180,6 +180,7 @@ def create_dt_ID(df: pd.DataFrame):
     meanall = df["dt_ID"].mean() # needed when an ID is used only once, hence no mean
     df["dt_ID"] = df.groupby("ID")["dt_ID"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
+    assert df["dt_ID"].min() > 0
     assert no_nan_or_inf(df["dt_ID"])
 
 def create_dt_data_ID(df: pd.DataFrame):

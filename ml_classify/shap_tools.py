@@ -19,6 +19,12 @@ def get_explanation(explainer, df: pd.DataFrame, size):
             data=df.to_numpy(),
             feature_names=df.columns)
     
+    # return_explanation = shap.Explanation(
+    #     values=explainer.shap_values(df)[0],
+    #     base_values=explainer.expected_value,
+    #     data=df.to_numpy(),
+    #     feature_names=df.columns)
+
     assert return_explanation != None
     
     return return_explanation
