@@ -90,25 +90,33 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
     # palette = sns.color_palette("plasma", n_colors=600) #sns.light_palette("seagreen", reverse=False,  n_colors=600 )
 
     fig, ax = plt.subplots(figsize=(80, y_squish))
-
+    
     sns.swarmplot(data=df_exp, x=feature, y="Label",
         hue=shap_exp, orient="h", palette="icefire", #ax=ax,
         size=5) #, showfliers=False, scale="count", bw=0.2, gridsize=1000)
+    
     fig.set_size_inches(20, 2)
+
     sns.violinplot(data=df_exp, x=feature, y="Label",
-        orient="h",  showfliers=False, scale="count", bw=0.3, gridsize=1000, color="lightgray", cut=0,
-        inner=None)
+        orient="h",  showfliers=False, scale="count", bw=0.3, gridsize=1000, color="lightgray",
+        cut=0, inner=None)
+    
     plt.legend([],[], frameon=False)
+
     cbar = plt.colorbar(plt.cm.ScalarMappable(cmap="icefire"), label="contribution\nof data point", location="right", pad=0.01)
     cbar.set_ticks([0, 1])
     cbar.set_ticklabels(["normal", "attack"])
+
     plt.title(f"CAN frame data points, viewed through the feature: {feature}")
     feature = feature + " (ms)" if feature[0:2] == "dt" else feature
+
     plt.ylabel("class of CAN data point")
     plt.xlabel(f"value of {feature}")
+
     plt.xticks(np.append(np.arange(0, feature_max, feature_max / 20), feature_max))
     if scale:
         plt.gca().get_xaxis().set_major_formatter(FuncFormatter(lambda x, p: format(x*1000, '.2f')))
     else:
         plt.gca().get_xaxis().set_major_formatter(FuncFormatter(lambda x, p: format(x, '.2f')))
+    
     plt.show()
