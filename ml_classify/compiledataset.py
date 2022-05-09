@@ -286,7 +286,7 @@ def read_file(filename):
     df.rename(columns={'Timestamp':'t'}, inplace=True, errors="ignore")
     
     binary_payload(df)
-    dec_payload(df)
+    # dec_payload(df)
     # drop_bytes(df)
 
     create_dcs(df)
@@ -295,7 +295,7 @@ def read_file(filename):
     create_dt(df)
     create_dt_ID(df)
     create_dt_data(df)
-    create_dt_data_bytewise(df)
+    # create_dt_data_bytewise(df)
     # create_dt_ones(df)
     # create_dt_runs(df)
     # create_dt_ID_data(df)

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 shap.initjs()
 
-def get_explanation(explainer, df: pd.DataFrame, size):
+def get_explanation(explainer, df: pd.DataFrame):
 
     return_explanation = None
 
