@@ -104,13 +104,13 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
     plt.legend([],[], frameon=False)
 
     cbar = plt.colorbar(plt.cm.ScalarMappable(cmap="icefire"), label="contribution\nof data point", location="right", pad=0.01)
-    cbar.set_ticks([0, 1])
-    cbar.set_ticklabels(["normal", "attack"])
+    cbar.set_ticks([0, 0.5, 1])
+    cbar.set_ticklabels(["towards\nnormal", "none", "towards\nattack"])
 
-    plt.title(f"CAN frame data points, viewed through the feature: {feature}")
+    plt.title(f"How the RF classifies a sample (600) of training data, viewed through the feature: {feature}")
     feature = feature + " (ms)" if feature[0:2] == "dt" else feature
 
-    plt.ylabel("class of CAN data point")
+    plt.ylabel("as classified by RF")
     plt.xlabel(f"value of {feature}")
 
     plt.xticks(np.append(np.arange(0, feature_max, feature_max / 20), feature_max))
