@@ -92,17 +92,20 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
     # palette = sns.color_palette("plasma", n_colors=600) #sns.light_palette("seagreen", reverse=False,  n_colors=600 )
 
     fig, ax = plt.subplots(figsize=(80, y_squish))
-    
-    # scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
-    # cvals = shap_exp / scaler
-    # cvals = (cvals + 1) / 2
+    # print(shap_exp)
+    scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
+    cvals = shap_exp / scaler
+    cvals = (cvals + 1) / 2
+    # cvals = (shap_exp + 1) / 2
+    # print(shap_exp[shap_exp > 0])
+    # print(len(shap_exp[shap_exp < 0]))
     # print(cvals.min())
     # print(cvals.max())
-    # icefire = cm.get_cmap("icefire")
-    # newcmp = LinearSegmentedColormap.from_list('n', icefire(np.linspace(cvals.min(), cvals.max(), len(cvals))))
+    icefire = cm.get_cmap("icefire")
+    newcmp = LinearSegmentedColormap.from_list('testCmap2', icefire(np.linspace(0, 1, len(shap_exp))), N=600)
 
     sns.swarmplot(data=df_exp, x=feature, y="Label",
-        hue=shap_exp, orient="h", palette="icefire", # palette=newcmp(np.linspace(0, 1, 5)),
+        hue=shap_exp, orient="h", palette=newcmp(np.linspace(0, 1, len(shap_exp))), # palette="icefire",
         size=5)
     
     fig.set_size_inches(20, 2)
