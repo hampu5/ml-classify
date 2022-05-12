@@ -5,6 +5,8 @@ import seaborn as sns
 from scipy import stats
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib import cm
 
 shap.initjs()
 
@@ -91,9 +93,17 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
 
     fig, ax = plt.subplots(figsize=(80, y_squish))
     
+    # scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
+    # cvals = shap_exp / scaler
+    # cvals = (cvals + 1) / 2
+    # print(cvals.min())
+    # print(cvals.max())
+    # icefire = cm.get_cmap("icefire")
+    # newcmp = LinearSegmentedColormap.from_list('n', icefire(np.linspace(cvals.min(), cvals.max(), len(cvals))))
+
     sns.swarmplot(data=df_exp, x=feature, y="Label",
-        hue=shap_exp, orient="h", palette="icefire", #ax=ax,
-        size=5) #, showfliers=False, scale="count", bw=0.2, gridsize=1000)
+        hue=shap_exp, orient="h", palette="icefire", # palette=newcmp(np.linspace(0, 1, 5)),
+        size=5)
     
     fig.set_size_inches(20, 2)
 
