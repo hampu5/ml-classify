@@ -92,31 +92,32 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
     # palette = sns.color_palette("plasma", n_colors=600) #sns.light_palette("seagreen", reverse=False,  n_colors=600 )
 
     fig, ax = plt.subplots(figsize=(80, y_squish))
-    # print(shap_exp)
-    scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
-    cvals = shap_exp / scaler
-    cvals = (cvals + 1) / 2
-    # cvals = (shap_exp + 1) / 2
-    # print(shap_exp[shap_exp > 0])
-    # print(len(shap_exp[shap_exp < 0]))
-    # print(cvals.min())
-    # print(cvals.max())
-    icefire = cm.get_cmap("icefire")
-    newcmp = LinearSegmentedColormap.from_list('testCmap2', icefire(np.linspace(0, 1, len(shap_exp))), N=600)
+    
+    cmap_name = "icefire"
+    violin_color = "lightgray"
 
-    sns.swarmplot(data=df_exp, x=feature, y="Label",
-        hue=shap_exp, orient="h", palette=newcmp(np.linspace(0, 1, len(shap_exp))), # palette="icefire",
+    scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
+    shap_hues = shap_exp / scaler
+    shap_hues = (shap_hues + 1) * shap_all.base_values[0]
+    
+    cmap = sns.color_palette(cmap_name, as_cmap=True)
+    norm = plt.Normalize(vmin=0, vmax=1)
+    palette = {h: cmap(norm(h)) for h in shap_hues}
+
+    ax = sns.swarmplot(data=df_exp, x=feature, y="Label",
+        hue=shap_hues, orient="h", palette=palette,
         size=5)
+    ax.legend_.remove()
     
     fig.set_size_inches(20, 2)
 
     sns.violinplot(data=df_exp, x=feature, y="Label",
-        orient="h",  showfliers=False, scale="count", bw=0.3, gridsize=1000, color="lightgray",
+        orient="h",  showfliers=False, scale="count", bw=0.3, gridsize=1000, linewidth=0, color=violin_color,
         cut=0, inner=None)
     
     plt.legend([],[], frameon=False)
 
-    cbar = plt.colorbar(plt.cm.ScalarMappable(cmap="icefire"), label="contribution\nof data point", location="right", pad=0.01)
+    cbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap_name), label="contribution\nof data point", location="right", pad=0.01)
     cbar.set_ticks([0, 0.5, 1])
     cbar.set_ticklabels(["towards\nnormal", "none", "towards\nattack"])
 
