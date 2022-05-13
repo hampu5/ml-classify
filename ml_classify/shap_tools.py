@@ -71,25 +71,23 @@ def plot_scatter(exp_obj, feature):
     plt.show()
     return vis
 
-def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=None, y_squish=10, scale=False):
-    # df_exp = pd.concat([X_train_exp, y_train_exp], axis=1)
+def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=None, y_squish=10, scale=1):
     df_exp["Label"].replace({0: "normal", 1: "attack"}, inplace=True)
     shap_exp = shap_all.values[:,df_exp.columns.get_loc(feature)]
-    
-    feature_max = df_exp[feature].max()
 
     mask = None
     if trim == None:
         mask = (np.abs(stats.zscore(df_exp[feature])) < 3)
     else:
-        feature_max = trim[1]
         mask = (df_exp[feature] > trim[0]) & (df_exp[feature] < trim[1])
+
+    attack_outliers = shap_exp[~mask & (df_exp["Label"] == "attack")]
+    normal_outliers = shap_exp[~mask & (df_exp["Label"] == "normal")]
 
     shap_exp = shap_exp[mask]
     df_exp = df_exp[mask]
 
     # plt.figure(figsize=(20, 2), dpi=100)
-    # palette = sns.color_palette("plasma", n_colors=600) #sns.light_palette("seagreen", reverse=False,  n_colors=600 )
 
     fig, ax = plt.subplots(figsize=(80, y_squish))
     
@@ -99,38 +97,60 @@ def plot_exp(df_exp: pd.DataFrame, shap_all: shap.Explanation, feature, trim=Non
     scaler = max(abs(shap_exp.min()), abs(shap_exp.max()))
     shap_hues = shap_exp / scaler
     shap_hues = (shap_hues + 1) * shap_all.base_values[0]
+
+    if attack_outliers.size != 0:
+        attack_outliers /= max(abs(attack_outliers.min()), abs(attack_outliers.max()))
+        attack_outliers = (attack_outliers + 1) * shap_all.base_values[0]
+
+    if normal_outliers.size != 0:
+        normal_outliers /= max(abs(normal_outliers.min()), abs(normal_outliers.max()))
+        normal_outliers = (normal_outliers + 1) * shap_all.base_values[0]
     
     cmap = sns.color_palette(cmap_name, as_cmap=True)
     norm = plt.Normalize(vmin=0, vmax=1)
-    palette = {h: cmap(norm(h)) for h in shap_hues}
+    palette = {h: cmap(h) for h in shap_hues}
 
-    ax = sns.swarmplot(data=df_exp, x=feature, y="Label",
+    values = df_exp[feature]
+    feature_min = values.min()
+    feature_max = values.max()
+    values = (values - values.min()) / (values.max() - values.min())
+    label = df_exp["Label"]
+
+    ax_swarm = sns.swarmplot(x=values, y=label, order=["attack", "normal"],
         hue=shap_hues, orient="h", palette=palette,
         size=5)
     ax.legend_.remove()
-    
-    fig.set_size_inches(20, 2)
 
-    sns.violinplot(data=df_exp, x=feature, y="Label",
+    fig.set_size_inches(20, 3)
+
+    sns.violinplot(x=values, y=label, order=["attack", "normal"],
         orient="h",  showfliers=False, scale="count", bw=0.3, gridsize=1000, linewidth=0, color=violin_color,
-        cut=0, inner=None)
-    
-    plt.legend([],[], frameon=False)
+        cut=0, inner=None, ax=ax_swarm)
 
-    cbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap_name), label="contribution\nof data point", location="right", pad=0.01)
+    cbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap_name), label="contribution", location="bottom", shrink=0.2, anchor=(1, 0.9))
     cbar.set_ticks([0, 0.5, 1])
     cbar.set_ticklabels(["towards\nnormal", "none", "towards\nattack"])
 
-    plt.title(f"How the RF classifies a sample (600) of training data, viewed through the feature: {feature}")
+    plt.title(f"How the RF-model classifies data - feature: {feature}")
     feature = feature + " (ms)" if feature[0:2] == "dt" else feature
 
-    plt.ylabel("as classified by RF")
+    plt.ylabel("type of data")
     plt.xlabel(f"value of {feature}")
 
-    plt.xticks(np.append(np.arange(0, feature_max, feature_max / 20), feature_max))
-    if scale:
-        plt.gca().get_xaxis().set_major_formatter(FuncFormatter(lambda x, p: format(x*1000, '.2f')))
-    else:
-        plt.gca().get_xaxis().set_major_formatter(FuncFormatter(lambda x, p: format(x, '.2f')))
+    plt.xticks(ticks=np.linspace(0, 1, 20), labels=map(lambda x: format(x*scale, '.2f'), np.linspace(feature_min, feature_max, 20)))
+    
+    s_last = ax.get_xticks()[-2]
+    last = ax.get_xticks()[-1]
+    
+    if attack_outliers.size != 0:
+        plt.arrow(last + (last-s_last) * 0.5, 0, last-s_last, 0, facecolor=cmap(attack_outliers.mean()), edgecolor=violin_color,
+            width=0.15, head_length=(last-s_last)*0.7, head_width=0.4,
+            length_includes_head=True)
+    if normal_outliers.size != 0:
+        plt.arrow(last + (last-s_last) * 0.5, 1, last-s_last, 0, facecolor=cmap(normal_outliers.mean()), edgecolor=violin_color,
+            width=0.15, head_length=(last-s_last)*0.7, head_width=0.4,
+            length_includes_head=True)
+    
+    plt.margins(x=0.02)
     
     plt.show()
