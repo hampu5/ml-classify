@@ -330,6 +330,10 @@ def extract_window(df: pd.DataFrame, window_size):
     # X = dfw.drop("Label", axis = 1)
     return dfw
 
+# def extract_window2(df: pd.DataFrame, window_size):
+#     def in_window(df_temp):
+#         column_names = {c: f"{c}_{i}" for c in cols}
+#     df.rolling(window_size).apply(lambda x: x)
 
 
 def read_file(filename):
@@ -352,11 +356,6 @@ def read_file(filename):
     # create_dt_runs(df)
     # create_dt_ID_data(df)
     # create_dc(df)
-
-    # df.drop(columns=["data", "data_dec", "DLC"], inplace=True, errors="ignore")
-    # df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True, errors="ignore")
-
-    # df = extract_window(df, 10)
     
     return df
 
