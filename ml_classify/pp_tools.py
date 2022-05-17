@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 
 def scale_dataset(df: pd.DataFrame, only_normal=False):
 
-    numeric_columns = [col for col in df if is_numeric_dtype(df[col].dtype)]
+    numeric_columns = [col for col in df.drop(columns="Label", errors="ignore") if is_numeric_dtype(df[col].dtype)]
 
     # feature_columns= list(set(df.columns.to_list()).difference(["name", "class", "dataset", "type", "Label"]))
 
