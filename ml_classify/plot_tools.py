@@ -6,13 +6,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 
-def plot_confusion_matrix(y_test, pred, title, cbar=True):
+def plot_confusion_matrix(y_test, pred, title, cbar=True, loc="right"):
     cm_norm = confusion_matrix(y_test, pred, normalize="true")
     cm = confusion_matrix(y_test, pred)
     annots = pd.DataFrame(cm_norm).applymap(lambda x: str(round(x, 3)))
     annots += pd.DataFrame(cm).applymap(lambda x: f"\n({str(x)})")
     plt.figure(dpi=100)
-    sns.heatmap(cm_norm, annot=annots, fmt="s", square=True, vmin=0, vmax=1, xticklabels=["normal", "attack"], yticklabels=["normal", "attack"], cbar=cbar)
+    sns.heatmap(cm_norm, annot=annots, fmt="s", square=True, vmin=0, vmax=1,
+        xticklabels=["normal", "attack"], yticklabels=["normal", "attack"], cbar=cbar,
+        cbar_kws={"location": loc}, annot_kws={"fontsize": "large"})
     # plt.title(title)
     plt.xlabel("predicted")
     plt.ylabel("true")
