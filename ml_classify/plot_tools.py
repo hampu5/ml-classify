@@ -13,7 +13,7 @@ def plot_confusion_matrix(y_test, pred, title, cbar=True, loc="right"):
     annots += pd.DataFrame(cm).applymap(lambda x: f"\n({str(x)})")
     plt.figure(dpi=100)
     sns.heatmap(cm_norm, annot=annots, fmt="s", square=True, vmin=0, vmax=1,
-        xticklabels=["normal", "attack"], yticklabels=["normal", "attack"], cbar=cbar,
+        xticklabels=["normal", "attack"], yticklabels=["normal", "attack"], cmap="GnBu", cbar=cbar,
         cbar_kws={"location": loc}, annot_kws={"fontsize": "large"})
     # plt.title(title)
     plt.xlabel("predicted")

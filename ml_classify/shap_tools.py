@@ -14,20 +14,20 @@ def get_explanation(explainer, df: pd.DataFrame):
 
     return_explanation = None
 
-    if isinstance(explainer, shap.TreeExplainer):
-        return_explanation = shap.Explanation(explainer(df)[:, :, 1], feature_names=df.columns)
-    elif isinstance(explainer, shap.KernelExplainer):
-        return_explanation = shap.Explanation(
-            values=explainer.shap_values(df)[0],
-            base_values=explainer.expected_value,
-            data=df.to_numpy(),
-            feature_names=df.columns)
+    # if isinstance(explainer, shap.TreeExplainer):
+    #     return_explanation = shap.Explanation(explainer(df)[:, :, 1], feature_names=df.columns)
+    # elif isinstance(explainer, shap.KernelExplainer):
+    #     return_explanation = shap.Explanation(
+    #         values=explainer.shap_values(df)[0],
+    #         base_values=explainer.expected_value,
+    #         data=df.to_numpy(),
+    #         feature_names=df.columns)
     
-    # return_explanation = shap.Explanation(
-    #     values=explainer.shap_values(df)[0],
-    #     base_values=explainer.expected_value,
-    #     data=df.to_numpy(),
-    #     feature_names=df.columns)
+    return_explanation = shap.Explanation(
+        values=explainer.shap_values(df)[0],
+        base_values=explainer.expected_value[-1],
+        data=df.to_numpy(),
+        feature_names=df.columns)
 
     assert return_explanation != None
     
