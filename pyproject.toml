@@ -17,6 +17,7 @@ ipython = "^8.0.1"
 ipykernel = "^6.9.1"
 keras-tuner = "^1.1.0"
 scikeras = "^0.8.0"
+scipy = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
