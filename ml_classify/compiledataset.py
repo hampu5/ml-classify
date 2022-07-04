@@ -141,12 +141,22 @@ def fuzzify(s):
     return s_temp
 
 # 00110000111 11
-# 13663113791097
+# 13663113791097 <- FMC
+
+# 0 1 2 3 4 5 6 7  8  9  10 11 12 13 <- Ascending integers
+# 1 3 6 6 3 1 1 3  7  9  1  0  9  7  <- FMC
+# 1 4 8 9 7 6 7 10 15 18 11 11 21 20 <- FMC Ascending
 
 def fmc(s1, s2): # "Fuzzy" Matching Coefficient
     s1_fuzz = fuzzify(s1)
     s2_fuzz = fuzzify(s2)
     return sum([(10 - abs(c1-c2)) for c1, c2 in zip(s1_fuzz, s2_fuzz)]) / (64*10)
+
+def fmc_ascending(s1, s2): # "Fuzzy" Matching Coefficient Ascending version
+    s1_fuzz = fuzzify(s1)
+    s2_fuzz = fuzzify(s2)
+    return sum([(10 + n - abs(c1-c2)) for n, (c1, c2) in enumerate(zip(s1_fuzz, s2_fuzz))]) / (64*10*1.45)
+
 
 def check_unique(x):
     shifted = x.shift(1)
@@ -155,7 +165,7 @@ def check_unique(x):
         if not (isinstance(s1, str) and isinstance(s2, str)):
             temp[idx2] = np.nan
             continue
-        temp[idx2] = 1 - smc(s1, s2) # fmc might be more general
+        temp[idx2] = 1 - fmc(s1, s2) # fmc might be more general
     return pd.Series(temp)
 
 def create_dcs(df: pd.DataFrame):
