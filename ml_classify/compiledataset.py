@@ -70,6 +70,7 @@ def no_nan_or_inf(s: pd.Series):
 def drop_bytes(df: pd.DataFrame):
     df.drop(columns=["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"], inplace=True, errors="ignore")
 
+
 def binary_payload(df: pd.DataFrame):
     df_data = df[["d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"]]
     # drop_bytes(df)
@@ -111,6 +112,12 @@ def hex_payload(df: pd.DataFrame):
     df_data = None
     
     assert not df["data_hex"].isnull().values.any(axis=None)
+
+
+def binary_ID(df: pd.DataFrame):
+    df["bin_ID"] = df["ID"].map(format_binary)
+
+    assert no_nan_or_inf(df["bin_ID"])
 
 # Various functions to create new features
 
@@ -164,6 +171,21 @@ def create_dcs_ID(df: pd.DataFrame):
     df["dcs_ID"] = df.groupby("ID")["dcs_ID"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
 
     assert no_nan_or_inf(df["dcs_ID"])
+
+
+def create_ics(df: pd.DataFrame):
+    ics = check_unique(df["bin_ID"])
+    df["ics"] = ics.fillna(ics.mean())
+    
+    assert no_nan_or_inf(df["ics"])
+
+def create_ics_data(df: pd.DataFrame):
+    df["ics_data"] = df.groupby("data")["bin_ID"].apply(check_unique)
+    meanall = df["ics_data"].mean() # needed when a dcs is used only once, hence no mean
+    df["ics_data"] = df.groupby("data")["ics_data"].apply(lambda x: x.fillna(x.mean() if len(x) > 1 else meanall))
+
+    assert no_nan_or_inf(df["ics_data"])
+
 
 # Helper function to translate absolute time to relative time
 def create_dt(df: pd.DataFrame):
@@ -338,11 +360,15 @@ def read_file(filename):
     df.rename(columns={'Timestamp':'t'}, inplace=True, errors="ignore")
 
     binary_payload(df)
+    binary_ID(df)
     # dec_payload(df)
     # drop_bytes(df)
 
     create_dcs(df)
     create_dcs_ID(df)
+
+    create_ics(df)
+    create_ics_data(df)
 
     create_dt(df)
     create_dt_ID(df)
