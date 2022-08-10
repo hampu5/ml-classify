@@ -9,7 +9,6 @@ import shap
 # Only works for binary classification
 # 'X' and 'y' has the same size as 'shap_all' (the shap values for X and y)
 # 'feature' is the feature to be plotted, trim is the x-axis range to plot, e.g., (0, 0.03)
-# 'y_squish' is to shrink the y-axis if points cannot be placed within the plot
 # 'colorbar' adds a color bar, and 'y_size' is used to compensate for size changes when adding color bar.
 
 def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, feature, trim=None, colorbar=False, y_size=1):
