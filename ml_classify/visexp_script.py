@@ -1,27 +1,28 @@
-import matplotlib
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import shap
-from matplotlib.patches import Rectangle
-import seaborn as sns
+# import matplotlib
+# from matplotlib.patches import Rectangle
+# import seaborn as sns
 
+# Only works for binary classification
 # 'X' and 'y' has the same size as 'shap_all' (the shap values for X and y)
 # 'feature' is the feature to be plotted, trim is the x-axis range to plot, e.g., (0, 0.03)
 # 'y_squish' is to shrink the y-axis if points cannot be placed within the plot
 # 'colorbar' adds a color bar, and 'y_size' is used to compensate for size changes when adding color bar.
 
-def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, feature, trim, y_squish=10, colorbar=False, y_size=1):
-    # y.replace({0: "normal", 1: "attack"}, inplace=True)
+def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, feature, trim=None, colorbar=False, y_size=1):
     shap_exp = shap_all.values[:,X.columns.get_loc(feature)]
 
     X_feature = X[feature]
 
-    label = list(pd.unique(y))
+    if trim == None:
+        trim = (0, max(X_feature))
+
+    label = sorted(pd.unique(y))
+
+    y_squish = max(len(y == label[0]), len(y == label[1]))
 
     # vvv Masking outliers vvv
 
-    mask = (X_feature >= trim[0]) & (X_feature < trim[1])
+    mask = (X_feature >= trim[0]) & (X_feature <= trim[1])
     positive_outliers = shap_exp[~mask & (y == label[1])]
     negative_outliers = shap_exp[~mask & (y == label[0])]
 
@@ -30,7 +31,8 @@ def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, fe
     y = y[mask]
 
     # ^^^ Masking outlier ^^^
-
+    
+    # The trick is to change size of the plot to make it look nice, it is a bit hacky
     fig, ax = plt.subplots(dpi=100, figsize=(80, y_squish))
     
     cmap_name = "icefire"
@@ -46,30 +48,37 @@ def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, fe
 
     # X_feature = (X_feature - X_feature.min()) / (X_feature.max() - X_feature.min())
 
-    sns.swarmplot(x=X_feature, y=y, order=[label[1], label[0]],
+    sns.swarmplot(x=X_feature, y=y, order=[label[0], label[1]],
         hue=shap_hues, orient="h", palette=palette,
         size=5)
     
-    # Change offset on dots for normal (0)
-    offsets = ax.collections[0].get_offsets()
-    offsets = [[elem[0], -abs(elem[1] - 0) - 0.05] for elem in offsets]
-    ax.collections[0].set_offsets(offsets)
 
-    # Change offset on dots for attack (1)
-    offsets = ax.collections[1].get_offsets()
-    offsets = [[elem[0], abs(elem[1] - 1) + 0.05] for elem in offsets]
-    ax.collections[1].set_offsets(offsets)
+    # Get offsets for negative and positive points
+    offsets_negative = np.array(ax.collections[0].get_offsets())
+    offsets_positive = np.array(ax.collections[1].get_offsets())
+    max_negative = np.max(np.abs(offsets_negative)[:, 1])
+    max_positive = np.max(np.abs(offsets_positive)[:, 1] - 1)
+    offset_scaler = max(max_negative, max_positive) / 0.35
+    
+    # Change offset on dots for negative (0) and positive (1)
+    offsets_negative = [[elem[0], -abs(elem[1] - 0) / offset_scaler - 0.05] for elem in offsets_negative]
+    offsets_positive = [[elem[0], abs(elem[1] - 1) / offset_scaler + 0.05] for elem in offsets_positive]
+
+    ax.collections[0].set_offsets(offsets_negative)
+    ax.collections[1].set_offsets(offsets_positive)
+
 
     fig.set_size_inches(10, y_size)
 
-    sns.violinplot(x=X_feature, y=[0]*y.size, hue=y, split=True, hue_order=[label[1], label[0]],
+    sns.violinplot(x=X_feature, y=[0]*y.size, hue=y, split=True, hue_order=[label[0], label[1]],
         orient="h",  showfliers=False, scale="count", bw=0.2, gridsize=1000, linewidth=0, color=violin_color,
         cut=0, inner=None)
     
-    ax.legend_.remove()
-    
     for violin in ax.findobj(matplotlib.collections.PolyCollection):
         violin.set_facecolor("lightgray")
+    
+    ax.legend_.remove()
+    
     
 
     if colorbar:
@@ -119,13 +128,13 @@ def plot_visexp(X: pd.DataFrame, y: pd.DataFrame, shap_all: shap.Explanation, fe
     ax.set_xlabel("")
     ax.set_ylabel(feature) #, rotation="vertical", x=-1, y=0.4)
     ax.set_xticks(ticks=ticks)
-    ax.set_yticks(ticks=[-0.25, 0.25], labels=[label[1], label[0]])
+    ax.set_yticks(ticks=[-0.25, 0.25], labels=[label[0], label[1]])
     if negative_outliers.size != 0 or positive_outliers.size != 0:
         ax.set_xlim((trim[0]-ticks[1]*0.3, trim[1]+ticks[1]))
     else:
         ax.set_xlim((trim[0]-ticks[1]*0.3, trim[1]+ticks[1]*0.3))
 
-    ax.add_artist(Rectangle((trim[0]-ticks[1]*0.2, -0.01), width=trim[1]+ticks[1]*0.4, height=0.02, color="black", linewidth=0))
+    ax.add_artist(Rectangle((trim[0]-ticks[1]*0.2, -0.01), width=trim[1]+ticks[1]*0.4, height=0.02/y_size, color="black", linewidth=0))
     # ax.axhline(y=0, color="black", linewidth=0.5)
     ax.margins(x=0.5)
     
