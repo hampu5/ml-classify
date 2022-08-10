@@ -1,6 +1,10 @@
-# import matplotlib
-# from matplotlib.patches import Rectangle
-# import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from matplotlib.patches import Rectangle
+import seaborn as sns
+import shap
 
 # Only works for binary classification
 # 'X' and 'y' has the same size as 'shap_all' (the shap values for X and y)
